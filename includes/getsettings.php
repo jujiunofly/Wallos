@@ -30,6 +30,17 @@ if ($settings !== false) {
     $settings['mobileNavigation'] = $settings['mobile_nav'] ? 'true': 'false';
     $settings['showSubscriptionProgress'] = $settings['show_subscription_progress'] ? 'true': 'false';
     $settings['week_starts_sunday'] = isset($settings['week_starts_sunday']) ? $settings['week_starts_sunday'] : 0;
+    $settings['timezone'] = $settings['timezone'] ?? '';
+    $settings['glass_enabled'] = isset($settings['glass_enabled']) ? (int) $settings['glass_enabled'] : 0;
+    $settings['glass_blur'] = isset($settings['glass_blur']) ? (int) $settings['glass_blur'] : 16;
+    $settings['glass_opacity'] = isset($settings['glass_opacity']) ? (int) $settings['glass_opacity'] : 70;
+    $settings['bg_desktop_light'] = $settings['bg_desktop_light'] ?? '';
+    $settings['bg_desktop_dark'] = $settings['bg_desktop_dark'] ?? '';
+    $settings['bg_mobile_light'] = $settings['bg_mobile_light'] ?? '';
+    $settings['bg_mobile_dark'] = $settings['bg_mobile_dark'] ?? '';
+
+    require_once __DIR__ . '/appearance.php';
+    wallos_apply_user_timezone($settings['timezone']);
 }
 
 $query = "SELECT * FROM custom_colors WHERE user_id = :userId";

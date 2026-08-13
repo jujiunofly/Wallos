@@ -567,6 +567,7 @@ button.mobile-action-renew {
   box-shadow: var(--box-shadow);
   padding: 12px 15px;
   border-radius: 16px;
+  overflow: visible;
   cursor: pointer;
   position: relative;
   transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
@@ -575,7 +576,7 @@ button.mobile-action-renew {
 }
 
 .subscription:hover {
-  border-color: rgba(var(--main-color-rgb), 0.35);
+  border-color: rgba(var(--main-color-rgb), 0.55);
 }
 
 .subscription-container.hide {
@@ -639,7 +640,7 @@ button.mobile-action-renew {
   position: absolute;
   right: -16px;
   top: 60px;
-  z-index: 2;
+  z-index: 40;
   flex-direction: column;
   color: var(--text-color);
   background-color: var(--box-background-color);
@@ -1429,6 +1430,26 @@ label {
   cursor: pointer;
 }
 
+.backup-api-row {
+  min-width: 0;
+}
+
+.backup-api-row input[type="text"] {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 13px;
+}
+
+@media (max-width: 768px) {
+  .backup-api-row {
+    flex-wrap: wrap;
+  }
+
+  .backup-api-row .button {
+    width: 100%;
+  }
+}
+
 label.split-label {
   display: flex;
   flex-direction: row;
@@ -1976,7 +1997,7 @@ button.dark-theme-button i {
   left: 50%;
   top: 50%;
   transform: translateX(-50%) translateY(-50%);
-  z-index: 20;
+  z-index: 50;
   max-width: 800px;
   max-height: calc(100vh - 34px);
   overflow: auto;
@@ -2825,6 +2846,56 @@ button.dark-theme-button i {
 
 .calendar-title h2 {
   margin-right: 0px;
+}
+
+.calendar-heading {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  min-width: 0;
+}
+
+.calendar-clock {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1;
+}
+
+.calendar-clock time {
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.calendar-clock-dot {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background-color: currentColor;
+  opacity: 0.55;
+  flex-shrink: 0;
+}
+
+@media (max-width: 768px) {
+  .calendar-title {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .calendar-heading {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .calendar-clock {
+    font-size: 12px;
+    gap: 6px;
+  }
 }
 
 .calendar-nav {
@@ -3806,7 +3877,7 @@ body.details-open {
   background-color: rgba(10, 14, 22, 0.45);
   -webkit-backdrop-filter: blur(3px);
   backdrop-filter: blur(3px);
-  z-index: 19;
+  z-index: 49;
   opacity: 0;
   visibility: hidden;
   transition: opacity 0.25s ease, visibility 0s linear 0.25s;
@@ -3834,7 +3905,7 @@ body.details-open {
   box-shadow: var(--shadow-pop);
   box-sizing: border-box;
   padding: 24px;
-  z-index: 20;
+  z-index: 50;
   color: var(--text-color);
 }
 
@@ -4108,7 +4179,7 @@ body.details-open {
   }
 
   .mobile-navigation .subscription-details {
-    z-index: 20;
+    z-index: 50;
   }
 }
 

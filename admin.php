@@ -39,7 +39,9 @@ $userCount = is_array($users) ? count($users) : 0;
 $loginDisabledAllowed = $userCount == 1 && $settings['registrations_open'] == 0;
 ?>
 
-<section class="contain settings">
+<section class="contain settings has-page-nav">
+    <nav class="page-nav" data-nav="auto" aria-label="<?= translate('on_this_page', $i18n) ?>"></nav>
+    <div class="page-nav-main">
 
     <section class="account-section">
         <header>
@@ -546,7 +548,17 @@ $loginDisabledAllowed = $userCount == 1 && $settings['registrations_open'] == 0;
             <input type="file" name="restoreDBFile" id="restoreDBFile" style="display: none;" onChange="restoreDB()"
                 accept=".zip">
         </div>
+        <h3><?= translate('backup_api', $i18n) ?></h3>
+        <div class="form-group-inline backup-api-row">
+            <input id="backupApiUrl" type="text" value="" readonly>
+            <input type="hidden" id="backupApiKey" value="<?= htmlspecialchars($userData['api_key'] ?? '', ENT_QUOTES) ?>">
+            <button type="button" onclick="copyBackupApiUrl()" class="button tiny"><?= translate('copy_to_clipboard', $i18n) ?></button>
+        </div>
         <div class="settings-notes">
+            <p>
+                <i class="fa-solid fa-circle-info"></i>
+                <?= translate('backup_api_info', $i18n) ?>
+            </p>
             <p>
                 <i class="fa-solid fa-circle-info"></i>
                 <?= translate('restore_info', $i18n) ?>
@@ -554,6 +566,7 @@ $loginDisabledAllowed = $userCount == 1 && $settings['registrations_open'] == 0;
         </div>
     </section>
 
+    </div>
 </section>
 <script src="scripts/admin.js?<?= $version ?>"></script>
 

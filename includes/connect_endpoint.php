@@ -1,5 +1,7 @@
 <?php
 
+require_once __DIR__ . '/set_app_timezone.php';
+
 $databaseFile = '../../db/wallos.db';
 $db = new SQLite3($databaseFile);
 $db->busyTimeout(5000);
@@ -32,6 +34,23 @@ if (isset($_SESSION['loggedin']) && $_SESSION['loggedin'] === true) {
     // endpoints don't silently behave as logged-out after an idle period.
     $restoredUser = restoreSessionFromRememberMeCookie($db);
     $userId = $restoredUser !== false ? $restoredUser['id'] : 0;
+}
+
+if (!empty($userId)) {
+    require_once __DIR__ . '/appearance.php';
+    try {
+        $tzStmt = $db->prepare('SELECT timezone FROM settings WHERE user_id = :userId');
+        if ($tzStmt) {
+            $tzStmt->bindValue(':userId', $userId, SQLITE3_INTEGER);
+            $tzResult = $tzStmt->execute();
+            $tzRow = $tzResult ? $tzResult->fetchArray(SQLITE3_ASSOC) : false;
+            if ($tzRow && !empty($tzRow['timezone'])) {
+                wallos_apply_user_timezone($tzRow['timezone']);
+            }
+        }
+    } catch (Throwable $e) {
+        // Older databases may not have the timezone column yet.
+    }
 }
 
 ?>

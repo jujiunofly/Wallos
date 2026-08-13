@@ -3,7 +3,10 @@
   if (count($members) > 1) {
     ?>
     <div class="filtermenu-submenu">
-      <div class="filter-title" onClick="toggleSubMenu('member')"><?= translate("member", $i18n) ?></div>
+      <div class="filter-title" onClick="toggleSubMenu('member')">
+        <span class="filter-title-label"><i class="fa-solid fa-user"></i><?= translate("member", $i18n) ?></span>
+        <i class="fa-solid fa-chevron-down filter-caret"></i>
+      </div>
       <div class="filtermenu-submenu-content" id="filter-member">
         <?php
         foreach ($members as $member) {
@@ -32,7 +35,10 @@
   if (count($categories) > 1) {
     ?>
     <div class="filtermenu-submenu">
-      <div class="filter-title" onClick="toggleSubMenu('category')"><?= translate("category", $i18n) ?></div>
+      <div class="filter-title" onClick="toggleSubMenu('category')">
+        <span class="filter-title-label"><i class="fa-solid fa-folder"></i><?= translate("category", $i18n) ?></span>
+        <i class="fa-solid fa-chevron-down filter-caret"></i>
+      </div>
       <div class="filtermenu-submenu-content" id="filter-category">
         <?php
         foreach ($categories as $category) {
@@ -65,7 +71,10 @@
   if (count($payment_methods) > 1) {
     ?>
     <div class="filtermenu-submenu">
-      <div class="filter-title" onClick="toggleSubMenu('payment')"><?= translate("payment_method", $i18n) ?></div>
+      <div class="filter-title" onClick="toggleSubMenu('payment')">
+        <span class="filter-title-label"><i class="fa-solid fa-credit-card"></i><?= translate("payment_method", $i18n) ?></span>
+        <i class="fa-solid fa-chevron-down filter-caret"></i>
+      </div>
       <div class="filtermenu-submenu-content" id="filter-payment">
         <?php
         foreach ($payment_methods as $payment) {
@@ -95,7 +104,10 @@
   if (!isset($settings['hideDisabledSubscriptions']) || $settings['hideDisabledSubscriptions'] !== 'true') {
     ?>
     <div class="filtermenu-submenu">
-      <div class="filter-title" onClick="toggleSubMenu('state')"><?= translate("state", $i18n) ?></div>
+      <div class="filter-title" onClick="toggleSubMenu('state')">
+        <span class="filter-title-label"><i class="fa-solid fa-toggle-on"></i><?= translate("state", $i18n) ?></span>
+        <i class="fa-solid fa-chevron-down filter-caret"></i>
+      </div>
       <div class="filtermenu-submenu-content" id="filter-state">
         <div class="filter-item capitalize" data-state="0"><?= translate("enabled", $i18n) ?></div>
         <div class="filter-item capitalize" data-state="1"><?= translate("disabled", $i18n) ?></div>
@@ -106,7 +118,10 @@
   ?>
 
   <div class="filtermenu-submenu">
-    <div class="filter-title" onClick="toggleSubMenu('renewal_type')"><?= translate("renewal_type", $i18n) ?></div>
+    <div class="filter-title" onClick="toggleSubMenu('renewal_type')">
+      <span class="filter-title-label"><i class="fa-solid fa-rotate"></i><?= translate("renewal_type", $i18n) ?></span>
+      <i class="fa-solid fa-chevron-down filter-caret"></i>
+    </div>
     <div class="filtermenu-submenu-content" id="filter-renewal_type">
       <div class="filter-item capitalize" data-renewaltype="1"><?= translate("auto_renewal", $i18n) ?></div>
       <div class="filter-item capitalize" data-renewaltype="0"><?= translate("manual_renewal", $i18n) ?></div>
@@ -115,7 +130,10 @@
   </div>
 
   <div class="filtermenu-submenu">
-    <div class="filter-title" onClick="toggleSubMenu('notification')"><?= translate("notifications", $i18n) ?></div>
+    <div class="filter-title" onClick="toggleSubMenu('notification')">
+      <span class="filter-title-label"><i class="fa-solid fa-bell"></i><?= translate("notifications", $i18n) ?></span>
+      <i class="fa-solid fa-chevron-down filter-caret"></i>
+    </div>
     <div class="filtermenu-submenu-content" id="filter-notification">
       <div class="filter-item capitalize" data-notificationtype="reminder"><?= translate("reminder", $i18n) ?></div>
       <div class="filter-item capitalize" data-notificationtype="cancellation"><?= translate("cancellation", $i18n) ?></div>

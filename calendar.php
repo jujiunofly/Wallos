@@ -133,9 +133,24 @@ if ($weekStartsSunday) {
     <?php
   }
   ?>
+  <?php
+    $appTimezone = date_default_timezone_get();
+    $appNow = new DateTimeImmutable('now');
+    $appTimeLabel = $appNow->format('H:i T');
+  ?>
   <div class="split-header">
     <div class="calendar-title">
-      <h2><?= translate('month-' . $calendarMonth, $i18n) ?> <?= $calendarYear ?></h2>
+      <div class="calendar-heading">
+        <h2><?= translate('month-' . $calendarMonth, $i18n) ?> <?= $calendarYear ?></h2>
+        <div class="calendar-clock" title="<?= htmlspecialchars(translate('calendar_time_hint', $i18n), ENT_QUOTES) ?>">
+          <time id="calendar-app-time"
+            datetime="<?= htmlspecialchars($appNow->format(DateTimeInterface::ATOM), ENT_QUOTES) ?>"
+            data-server-epoch="<?= $appNow->getTimestamp() ?>"
+            data-timezone="<?= htmlspecialchars($appTimezone, ENT_QUOTES) ?>"><?= htmlspecialchars($appTimeLabel) ?></time>
+          <span class="calendar-clock-dot" aria-hidden="true"></span>
+          <time id="calendar-local-time"></time>
+        </div>
+      </div>
       <div class="calendar-nav">
         <button class="button secondary-button" id="prev"
           onclick="prevMonth(<?= $calendarMonth ?>, <?= $calendarYear ?>)" <?= $sameAsCurrent ? 'disabled' : '' ?>>

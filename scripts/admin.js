@@ -92,6 +92,40 @@ function saveSmtpSettingsButton() {
 
 }
 
+function getBackupApiUrl() {
+  const apiKey = document.getElementById('backupApiKey').value;
+  return `${window.location.origin}${window.location.pathname.replace(/[^/]*$/, '')}api/admin/get_backup.php?api_key=${encodeURIComponent(apiKey)}`;
+}
+
+function fillBackupApiUrl() {
+  const field = document.getElementById('backupApiUrl');
+  if (field) {
+    field.value = getBackupApiUrl();
+  }
+}
+
+function copyBackupApiUrl() {
+  const urlField = document.getElementById('backupApiUrl');
+  if (!urlField.value) {
+    fillBackupApiUrl();
+  }
+  urlField.select();
+  urlField.setSelectionRange(0, 99999);
+  navigator.clipboard.writeText(urlField.value)
+    .then(() => {
+      showSuccessMessage(translate('copied_to_clipboard'));
+    })
+    .catch(() => {
+      showErrorMessage(translate('unknown_error'));
+    });
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', fillBackupApiUrl);
+} else {
+  fillBackupApiUrl();
+}
+
 function backupDB() {
   const button = document.getElementById("backupDB");
   button.disabled = true;

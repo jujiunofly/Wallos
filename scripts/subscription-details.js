@@ -63,19 +63,76 @@ function detailsBillingCycleText(cycle, frequency) {
   return Number(frequency) === 1 || Number(cycle) === 5 ? units.one : `${frequency} ${units.many}`;
 }
 
-function detailsProgressPercentage(subscription) {
-  const cycleDays = { 1: 1, 2: 7, 3: 30, 4: 365 }[subscription.cycle];
-  if (!cycleDays) {
-    return null; // one-time purchase
-  }
-  const totalDays = cycleDays * subscription.frequency;
-  const nextPayment = new Date(subscription.next_payment + "T00:00:00");
-  if (isNaN(nextPayment)) {
+function detailsParseDateOnly(dateString) {
+  if (!dateString) {
     return null;
   }
-  const daysUntil = (nextPayment - new Date()) / 86400000;
-  const progress = ((totalDays - daysUntil) / totalDays) * 100;
-  return Math.min(100, Math.max(0, Math.floor(progress)));
+  const date = new Date(dateString + "T00:00:00");
+  return isNaN(date) ? null : date;
+}
+
+function detailsShiftDate(date, cycle, frequency, direction) {
+  const shifted = new Date(date.getTime());
+  const delta = direction * Math.max(1, Number(frequency) || 1);
+  switch (Number(cycle)) {
+    case 1:
+      shifted.setDate(shifted.getDate() + delta);
+      break;
+    case 2:
+      shifted.setDate(shifted.getDate() + delta * 7);
+      break;
+    case 4:
+      shifted.setFullYear(shifted.getFullYear() + delta);
+      break;
+    case 3:
+    default:
+      shifted.setMonth(shifted.getMonth() + delta);
+      break;
+  }
+  return shifted;
+}
+
+function detailsProgressPercentage(subscription) {
+  const cycle = Number(subscription.cycle);
+  const frequency = Number(subscription.frequency);
+  if (cycle === 5 || !cycle || frequency <= 0) {
+    return null; // one-time purchase
+  }
+
+  const nextPayment = detailsParseDateOnly(subscription.next_payment);
+  if (!nextPayment) {
+    return null;
+  }
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  if (today >= nextPayment) {
+    return 100;
+  }
+
+  let periodStart = new Date(nextPayment.getTime());
+  let guard = 0;
+  while (periodStart > today && guard < 240) {
+    const shifted = detailsShiftDate(periodStart, cycle, frequency, -1);
+    if (shifted.getTime() >= periodStart.getTime()) {
+      break;
+    }
+    periodStart = shifted;
+    guard += 1;
+  }
+
+  const startDate = detailsParseDateOnly(subscription.start_date);
+  if (startDate && startDate > periodStart && startDate < nextPayment) {
+    periodStart = startDate;
+  }
+
+  const periodDays = (nextPayment - periodStart) / 86400000;
+  if (periodDays <= 0) {
+    return 0;
+  }
+
+  const elapsedDays = (today - periodStart) / 86400000;
+  return Math.min(100, Math.max(0, Math.floor((elapsedDays / periodDays) * 100)));
 }
 
 function detailsAddChip(container, text, style) {

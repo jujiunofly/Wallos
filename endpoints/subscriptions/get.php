@@ -120,7 +120,8 @@ if (isset($_SESSION['loggedin']) && $_SESSION['loggedin'] === true) {
 
   $sortOrder = $sort;
   $allowedSortCriteria = ['name', 'id', 'next_payment', 'price', 'payer_user_id', 'category_id', 'payment_method_id', 'inactive', 'alphanumeric', 'renewal_type'];
-  $order = ($sort == "price" || $sort == "id") ? "DESC" : "ASC";
+  require_once '../../includes/appearance.php';
+  $order = wallos_sort_direction($sort);
 
   if ($sort == "alphanumeric") {
     $sort = "name";
@@ -200,7 +201,7 @@ if (isset($_SESSION['loggedin']) && $_SESSION['loggedin'] === true) {
     $print[$id]['category_id'] = $subscription['category_id'];
     $print[$id]['payer_user_id'] = $subscription['payer_user_id'];
     $print[$id]['price'] = floatval($subscription['price']);
-    $print[$id]['progress'] = getSubscriptionProgress($cycle, $frequency, $subscription['next_payment']);
+    $print[$id]['progress'] = getSubscriptionProgress($cycle, $frequency, $subscription['next_payment'], $subscription['start_date'] ?? null);
     $print[$id]['inactive'] = $subscription['inactive'];
     $print[$id]['url'] = $subscription['url'] ?? "";
     $print[$id]['notes'] = $subscription['notes'] ?? "";
@@ -220,8 +221,9 @@ if (isset($_SESSION['loggedin']) && $_SESSION['loggedin'] === true) {
   }
 
   if ($sortOrder == "alphanumeric") {
-    usort($print, function ($a, $b) {
-      return strnatcmp(strtolower($a['name']), strtolower($b['name']));
+    usort($print, function ($a, $b) use ($order) {
+      $cmp = strnatcmp(strtolower($a['name']), strtolower($b['name']));
+      return $order === 'DESC' ? -$cmp : $cmp;
     });
     if ($settings['disabledToBottom'] === 'true') {
       usort($print, function ($a, $b) {
@@ -231,14 +233,16 @@ if (isset($_SESSION['loggedin']) && $_SESSION['loggedin'] === true) {
   }
 
   if ($sortOrder == "category_id") {
-    usort($print, function ($a, $b) use ($categories) {
-      return $categories[$a['category_id']]['order'] - $categories[$b['category_id']]['order'];
+    usort($print, function ($a, $b) use ($categories, $order) {
+      $cmp = $categories[$a['category_id']]['order'] - $categories[$b['category_id']]['order'];
+      return $order === 'DESC' ? -$cmp : $cmp;
     });
   }
   
   if ($sortOrder == "payment_method_id") {
-    usort($print, function ($a, $b) use ($payment_methods) {
-      return $payment_methods[$a['payment_method_id']]['order'] - $payment_methods[$b['payment_method_id']]['order'];
+    usort($print, function ($a, $b) use ($payment_methods, $order) {
+      $cmp = $payment_methods[$a['payment_method_id']]['order'] - $payment_methods[$b['payment_method_id']]['order'];
+      return $order === 'DESC' ? -$cmp : $cmp;
     });
   }
 

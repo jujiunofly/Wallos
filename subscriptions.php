@@ -23,7 +23,7 @@ if (isset($_COOKIE['sortOrder']) && $_COOKIE['sortOrder'] != "") {
 
 $sortOrder = $sort;
 $allowedSortCriteria = ['name', 'id', 'next_payment', 'price', 'payer_user_id', 'category_id', 'payment_method_id', 'inactive', 'alphanumeric', 'renewal_type'];
-$order = ($sort == "price" || $sort == "id") ? "DESC" : "ASC";
+$order = wallos_sort_direction($sort);
 
 if ($sort == "alphanumeric") {
   $sort = "name";
@@ -135,14 +135,16 @@ foreach ($subscriptions as $subscription) {
 }
 
 if ($sortOrder == "category_id") {
-  usort($subscriptions, function ($a, $b) use ($categories) {
-    return $categories[$a['category_id']]['order'] - $categories[$b['category_id']]['order'];
+  usort($subscriptions, function ($a, $b) use ($categories, $order) {
+    $cmp = $categories[$a['category_id']]['order'] - $categories[$b['category_id']]['order'];
+    return $order === 'DESC' ? -$cmp : $cmp;
   });
 }
 
 if ($sortOrder == "payment_method_id") {
-  usort($subscriptions, function ($a, $b) use ($payment_methods) {
-    return $payment_methods[$a['payment_method_id']]['order'] - $payment_methods[$b['payment_method_id']]['order'];
+  usort($subscriptions, function ($a, $b) use ($payment_methods, $order) {
+    $cmp = $payment_methods[$a['payment_method_id']]['order'] - $payment_methods[$b['payment_method_id']]['order'];
+    return $order === 'DESC' ? -$cmp : $cmp;
   });
 }
 
@@ -241,7 +243,7 @@ $subscriptionsView = (isset($_COOKIE['subscriptionsView']) && $_COOKIE['subscrip
       $print[$id]['category_id'] = $subscription['category_id'];
       $print[$id]['payer_user_id'] = $subscription['payer_user_id'];
       $print[$id]['price'] = floatval($subscription['price']);
-      $print[$id]['progress'] = getSubscriptionProgress($cycle, $frequency, $subscription['next_payment']);
+      $print[$id]['progress'] = getSubscriptionProgress($cycle, $frequency, $subscription['next_payment'], $subscription['start_date'] ?? null);
       $print[$id]['inactive'] = $subscription['inactive'];
       $print[$id]['url'] = $subscription['url'];
       $print[$id]['notes'] = $subscription['notes'];

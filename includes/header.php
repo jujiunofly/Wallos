@@ -77,6 +77,25 @@ function hex2rgb($hex)
 
 $mobileNavigation = $settings['mobile_nav'] ? "mobile-navigation" : "";
 
+require_once __DIR__ . '/appearance.php';
+$appearance = wallos_appearance_from_settings($settings);
+$bgDesktopLight = wallos_background_css($appearance['bg_desktop_light'], false);
+$bgDesktopDark = wallos_background_css($appearance['bg_desktop_dark'], true);
+$bgMobileLight = wallos_background_css($appearance['bg_mobile_light'], false);
+$bgMobileDark = wallos_background_css($appearance['bg_mobile_dark'], true);
+if ($bgMobileLight === '') {
+    $bgMobileLight = $bgDesktopLight;
+}
+if ($bgMobileDark === '') {
+    $bgMobileDark = $bgDesktopDark;
+}
+$hasPageBg = $bgDesktopLight !== '' || $bgDesktopDark !== '' || $bgMobileLight !== '' || $bgMobileDark !== '';
+$appearanceClasses = trim(
+    ($appearance['glass_enabled'] ? 'glass-enabled' : '') . ' ' .
+    ($hasPageBg ? 'has-page-bg' : '')
+);
+$darkThemeMode = isset($settings['dark_theme']) ? (int) $settings['dark_theme'] : 2;
+
 ?>
 <!DOCTYPE html>
 <html dir="<?= $languages[$lang]['dir'] ?>">
@@ -102,8 +121,10 @@ $mobileNavigation = $settings['mobile_nav'] ? "mobile-navigation" : "";
   <link rel="stylesheet" href="styles/barlow.css">
   <link rel="stylesheet" href="styles/font-awesome.min.css">
   <link rel="stylesheet" href="styles/brands.css">
+  <link rel="stylesheet" href="styles/appearance.css?<?= $version ?>">
   <script type="text/javascript" src="scripts/all.js?<?= $version ?>"></script>
   <script type="text/javascript" src="scripts/common.js?<?= $version ?>"></script>
+  <script type="text/javascript" src="scripts/header-theme.js?<?= $version ?>"></script>
   <script type="text/javascript">
     window.theme = "<?= $theme ?>";
     window.update_theme_settings = "<?= $updateThemeSettings ?>";
@@ -111,8 +132,37 @@ $mobileNavigation = $settings['mobile_nav'] ? "mobile-navigation" : "";
     window.colorTheme = "<?= $colorTheme ?>";
     window.mobileNavigation = "<?= $settings['mobileNavigation'] == "true" ?>";
     window.csrfToken = "<?= htmlspecialchars(generate_csrf_token()) ?>";
+    window.darkThemeMode = <?= $darkThemeMode ?>;
+    window.themeLabels = {
+      0: <?= json_encode(translate('light_theme', $i18n), JSON_UNESCAPED_UNICODE) ?>,
+      1: <?= json_encode(translate('dark_theme', $i18n), JSON_UNESCAPED_UNICODE) ?>,
+      2: <?= json_encode(translate('automatic', $i18n), JSON_UNESCAPED_UNICODE) ?>
+    };
+    window.appearanceConfig = <?= json_encode([
+        'glass_enabled' => (int) $appearance['glass_enabled'],
+        'glass_blur' => (int) $appearance['glass_blur'],
+        'glass_opacity' => (int) $appearance['glass_opacity'],
+        'backgrounds' => [
+            'bg_desktop_light' => ['raw' => $appearance['bg_desktop_light'], 'css' => $bgDesktopLight],
+            'bg_desktop_dark' => ['raw' => $appearance['bg_desktop_dark'], 'css' => $bgDesktopDark],
+            'bg_mobile_light' => ['raw' => $appearance['bg_mobile_light'], 'css' => $bgMobileLight],
+            'bg_mobile_dark' => ['raw' => $appearance['bg_mobile_dark'], 'css' => $bgMobileDark],
+        ],
+        'presets' => array_map(function ($preset) {
+            return ['css' => $preset['css'], 'css_dark' => $preset['css_dark']];
+        }, wallos_background_presets()),
+    ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?>;
   </script>
+  <script type="text/javascript" src="scripts/page-nav.js?<?= $version ?>"></script>
   <style>
+    :root {
+      --glass-blur: <?= (int) $appearance['glass_blur'] ?>px;
+      --glass-alpha: <?= number_format($appearance['glass_opacity'] / 100, 2, '.', '') ?>;
+      --page-bg-desktop-light: <?= $bgDesktopLight !== '' ? $bgDesktopLight : 'none' ?>;
+      --page-bg-desktop-dark: <?= $bgDesktopDark !== '' ? $bgDesktopDark : 'none' ?>;
+      --page-bg-mobile-light: <?= $bgMobileLight !== '' ? $bgMobileLight : 'none' ?>;
+      --page-bg-mobile-dark: <?= $bgMobileDark !== '' ? $bgMobileDark : 'none' ?>;
+    }
     <?= htmlspecialchars($customCss, ENT_QUOTES, 'UTF-8') ?>
   </style>
   <?php
@@ -162,7 +212,7 @@ $mobileNavigation = $settings['mobile_nav'] ? "mobile-navigation" : "";
   </script>
 </head>
 
-<body class="<?= $theme ?> <?= $languages[$lang]['dir'] ?> <?= $mobileNavigation ?>">
+<body class="<?= $theme ?> <?= $languages[$lang]['dir'] ?> <?= $mobileNavigation ?> <?= $appearanceClasses ?>">
   <header>
     <div class="contain">
       <div class="logo">
@@ -172,7 +222,11 @@ $mobileNavigation = $settings['mobile_nav'] ? "mobile-navigation" : "";
           </div>
         </a>
       </div>
-      <nav>
+      <nav class="header-nav">
+        <button type="button" class="header-theme-toggle" id="headerThemeToggle"
+          title="<?= translate('theme', $i18n) ?>" aria-label="<?= translate('theme', $i18n) ?>">
+          <i class="fa-solid <?= $darkThemeMode === 1 ? 'fa-moon' : ($darkThemeMode === 0 ? 'fa-sun' : 'fa-circle-half-stroke') ?>"></i>
+        </button>
         <div class="dropdown">
           <button class="dropbtn" onClick="toggleDropdown()">
             <img src="<?= htmlspecialchars($userData['avatar'], ENT_QUOTES, 'UTF-8') ?>" alt="me" id="avatar">

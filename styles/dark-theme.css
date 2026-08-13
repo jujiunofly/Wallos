@@ -59,10 +59,15 @@ svg .text-color {
     color: #FFF;
 }
 
+.subscription {
+    border-color: #3D4658;
+}
+
 .subscription.inactive {
     background-color: var(--box-background-color);
     color: rgba(180, 188, 204, 0.55);
     box-shadow: none;
+    border-color: #323A4A;
 }
 
 .subscription-main .actions {

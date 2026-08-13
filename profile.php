@@ -20,7 +20,9 @@ while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
         content: '<?= translate('upload_logo', $i18n) ?>';
     }
 </style>
-<section class="contain settings">
+<section class="contain settings has-page-nav">
+    <nav class="page-nav" data-nav="auto" aria-label="<?= translate('on_this_page', $i18n) ?>"></nav>
+    <div class="page-nav-main">
     <section class="account-section">
         <header>
             <h2><?= translate('user_details', $i18n) ?></h2>
@@ -316,8 +318,7 @@ while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
         </div>
     </section>
 
-   
-
+    </div>
 </section>
 <script src="scripts/profile.js?<?= $version ?>"></script>
 <script src="scripts/theme.js?<?= $version ?>"></script>

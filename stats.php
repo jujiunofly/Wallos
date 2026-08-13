@@ -18,7 +18,9 @@ require_once 'includes/stats_calculations.php';
 require_once 'includes/stats_extra_calculations.php';
 
 ?>
-<section class="contain">
+<section class="contain has-page-nav">
+  <nav class="page-nav" data-nav="auto" aria-label="<?= translate('on_this_page', $i18n) ?>"></nav>
+  <div class="page-nav-main">
   <?php
   if ($showCantConverErrorMessage) {
     ?>
@@ -647,6 +649,7 @@ require_once 'includes/stats_extra_calculations.php';
   }
   ?>
 
+  </div>
 </section>
 <?php
 if ($showAnyGraph) {

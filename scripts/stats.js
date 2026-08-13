@@ -255,7 +255,9 @@ function closeSubMenus() {
     subMenus.forEach(subMenu => {
         subMenu.classList.remove('is-open');
     });
-
+    document.querySelectorAll('.filtermenu-submenu.is-expanded').forEach((menu) => {
+        menu.classList.remove('is-expanded');
+    });
 }
 
 document.addEventListener("DOMContentLoaded", function() {
@@ -281,11 +283,15 @@ document.addEventListener("DOMContentLoaded", function() {
 
 function toggleSubMenu(subMenu) {
     var subMenu = document.getElementById("filter-" + subMenu);
+    var parent = subMenu ? subMenu.closest('.filtermenu-submenu') : null;
     if (subMenu.classList.contains("is-open")) {
         closeSubMenus();
     } else {
         closeSubMenus();
         subMenu.classList.add("is-open");
+        if (parent) {
+            parent.classList.add("is-expanded");
+        }
     }
 }
 

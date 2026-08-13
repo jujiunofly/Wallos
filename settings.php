@@ -76,7 +76,9 @@ if ($budgetPeriodAnchorDate === '1970-01-01' || !preg_match('/^\d{4}-\d{2}-\d{2}
         }
     }
 </style>
-<section class="contain settings">
+<section class="contain settings has-page-nav">
+    <nav class="page-nav" data-nav="auto" aria-label="<?= translate('on_this_page', $i18n) ?>"></nav>
+    <div class="page-nav-main">
 
     <section class="account-section">
         <header>
@@ -1551,6 +1553,66 @@ if ($budgetPeriodAnchorDate === '1970-01-01' || !preg_match('/^\d{4}-\d{2}-\d{2}
                         onClick="saveCustomColors()" class="buton thin mobile-grow" id="save-colors">
                 </div>
             </div>
+            <div class="appearance-glass">
+                <h3><?= translate('glass_effect', $i18n) ?></h3>
+                <div class="form-group-inline">
+                    <input type="checkbox" id="glassEnabled" <?= !empty($appearance['glass_enabled']) ? 'checked' : '' ?>>
+                    <label for="glassEnabled"><?= translate('enable_glass', $i18n) ?></label>
+                </div>
+                <div class="glass-sliders">
+                    <div>
+                        <label for="glassBlur"><?= translate('glass_blur', $i18n) ?> <span id="glassBlurValue"><?= (int) $appearance['glass_blur'] ?></span>px</label>
+                        <input type="range" id="glassBlur" min="4" max="40" value="<?= (int) $appearance['glass_blur'] ?>">
+                    </div>
+                    <div>
+                        <label for="glassOpacity"><?= translate('glass_opacity', $i18n) ?> <span id="glassOpacityValue"><?= (int) $appearance['glass_opacity'] ?></span>%</label>
+                        <input type="range" id="glassOpacity" min="20" max="95" value="<?= (int) $appearance['glass_opacity'] ?>">
+                    </div>
+                </div>
+            </div>
+            <div>
+                <h3><?= translate('page_background', $i18n) ?></h3>
+                <p class="settings-notes"><i class="fa-solid fa-circle-info"></i> <?= translate('page_background_info', $i18n) ?></p>
+                <div class="appearance-grid">
+                    <?php
+                    $bgSlots = [
+                        'bg_desktop_light' => translate('bg_desktop_light', $i18n),
+                        'bg_desktop_dark' => translate('bg_desktop_dark', $i18n),
+                        'bg_mobile_light' => translate('bg_mobile_light', $i18n),
+                        'bg_mobile_dark' => translate('bg_mobile_dark', $i18n),
+                    ];
+                    foreach ($bgSlots as $slot => $label) {
+                        $parsed = wallos_parse_background_value($appearance[$slot] ?? '');
+                        $selectValue = $parsed['type'] === 'none' ? '' : ($parsed['type'] === 'preset' ? 'preset:' . $parsed['value'] : $parsed['type']);
+                        $previewCss = wallos_background_css($appearance[$slot] ?? '', str_contains($slot, 'dark'));
+                        ?>
+                        <div class="appearance-slot" data-slot="<?= $slot ?>">
+                            <h4><?= $label ?></h4>
+                            <select class="bg-type">
+                                <option value="" <?= $selectValue === '' ? 'selected' : '' ?>><?= translate('default', $i18n) ?></option>
+                                <?php foreach (wallos_background_presets() as $presetId => $preset) { ?>
+                                    <option value="preset:<?= $presetId ?>" <?= $selectValue === 'preset:' . $presetId ? 'selected' : '' ?>><?= htmlspecialchars($preset['label']) ?></option>
+                                <?php } ?>
+                                <option value="color" <?= $parsed['type'] === 'color' ? 'selected' : '' ?>><?= translate('solid_color', $i18n) ?></option>
+                                <option value="image" <?= $parsed['type'] === 'image' ? 'selected' : '' ?>><?= translate('background_image', $i18n) ?></option>
+                            </select>
+                            <input type="hidden" class="bg-current" value="<?= htmlspecialchars($appearance[$slot] ?? '') ?>">
+                            <input type="color" class="bg-color <?= $parsed['type'] === 'color' ? '' : 'hide' ?>" value="<?= $parsed['type'] === 'color' ? htmlspecialchars($parsed['value']) : '#e2e8f0' ?>">
+                            <label class="button secondary-button thin bg-file-button <?= $parsed['type'] === 'image' ? '' : 'hide' ?>">
+                                <i class="fa-solid fa-image"></i>
+                                <span><?= translate('choose_image', $i18n) ?></span>
+                                <input type="file" class="bg-file" accept="image/jpeg,image/png,image/webp">
+                            </label>
+                            <div class="appearance-preview" style="<?= $previewCss !== '' ? 'background:' . htmlspecialchars($previewCss, ENT_QUOTES) : '' ?>"></div>
+                        </div>
+                        <?php
+                    }
+                    ?>
+                </div>
+                <div class="form-group-inline" style="margin-top:16px">
+                    <input type="button" class="button thin mobile-grow hide" id="saveAppearance" value="<?= translate('save_appearance', $i18n) ?>" onClick="saveAppearance()">
+                </div>
+            </div>
             <?php
             if (!$demoMode) {
                 ?>
@@ -1603,6 +1665,19 @@ if ($budgetPeriodAnchorDate === '1970-01-01' || !preg_match('/^\d{4}-\d{2}-\d{2}
                         onChange="setShowOriginalPrice()" <?= $settings['show_original_price'] ? 'checked' : '' ?>>
                     <label for="showoriginalprice"><?= translate('show_original_price', $i18n) ?></label>
                 </div>
+            </div>
+            <h3><?= translate('timezone', $i18n) ?></h3>
+            <div class="form-group">
+                <select id="userTimezone" onChange="persistAppearance({ silent: false })">
+                    <option value=""><?= translate('use_server_timezone', $i18n) ?> (<?= htmlspecialchars(date_default_timezone_get()) ?>)</option>
+                    <?php
+                    $currentTimezone = $appearance['timezone'] ?? '';
+                    foreach (DateTimeZone::listIdentifiers() as $tzId) {
+                        $selected = $currentTimezone === $tzId ? 'selected' : '';
+                        echo '<option value="' . htmlspecialchars($tzId) . '" ' . $selected . '>' . htmlspecialchars($tzId) . '</option>';
+                    }
+                    ?>
+                </select>
             </div>
             <h3><?= translate('experience', $i18n) ?></h3>
             <div>
@@ -1672,6 +1747,7 @@ if ($budgetPeriodAnchorDate === '1970-01-01' || !preg_match('/^\d{4}-\d{2}-\d{2}
         </div>
     </section>
 
+    </div>
 </section>
 <script src="scripts/settings.js?<?= $version ?>"></script>
 <script src="scripts/theme.js?<?= $version ?>"></script>

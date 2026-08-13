@@ -18,47 +18,77 @@ function getBillingCycle($cycle, $frequency, $i18n)
     }
 }
 
-function getSubscriptionProgress($cycle, $frequency, $next_payment)
+function shiftSubscriptionDate(DateTimeImmutable $date, $cycle, $frequency, $direction)
 {
-    if ($cycle === 5) {
+    $frequency = max(1, abs((int) $frequency));
+    $sign = $direction < 0 ? '-' : '+';
+
+    switch ((int) $cycle) {
+        case 1:
+            return $date->modify("{$sign}{$frequency} days");
+        case 2:
+            return $date->modify("{$sign}{$frequency} weeks");
+        case 4:
+            return $date->modify("{$sign}{$frequency} years");
+        case 3:
+        default:
+            return $date->modify("{$sign}{$frequency} months");
+    }
+}
+
+function getSubscriptionProgress($cycle, $frequency, $next_payment, $start_date = null)
+{
+    $cycle = (int) $cycle;
+    $frequency = (int) $frequency;
+
+    if ($cycle === 5 || $frequency <= 0 || empty($next_payment)) {
         return 0;
     }
 
-    $nextPaymentDate = new DateTime($next_payment);
-    $currentDate = new DateTime((new DateTime('now'))->format('Y-m-d'));
-
-    $paymentCycleDays = 30; // Default to monthly
-    if ($cycle === 1) {
-        $paymentCycleDays = 1 * $frequency;
-    } else if ($cycle === 2) {
-        $paymentCycleDays = 7 * $frequency;
-    } else if ($cycle === 3) {
-        $paymentCycleDays = 30 * $frequency;
-    } else if ($cycle === 4) {
-        $paymentCycleDays = 365 * $frequency;
-    }
-
-    if ($paymentCycleDays <= 0) {
+    try {
+        $nextPaymentDate = new DateTimeImmutable($next_payment);
+        $currentDate = new DateTimeImmutable('today');
+    } catch (Exception $e) {
         return 0;
     }
 
-    // next_payment can be many cycles away from today (a stale value, or
-    // several missed renewal runs), so we can't always assume it's within a
-    // single cycle of "now". Walk back however many whole cycles are needed
-    // so the window we measure progress against is the one that actually
-    // contains today.
-    $daysUntilNextPayment = $currentDate->diff($nextPaymentDate)->days;
-    $cyclesBack = $currentDate <= $nextPaymentDate
-        ? max(1, (int) ceil($daysUntilNextPayment / $paymentCycleDays))
-        : 1;
+    if ($currentDate >= $nextPaymentDate) {
+        return 100;
+    }
 
-    $lastPaymentDate = clone $nextPaymentDate;
-    $lastPaymentDate->modify('-' . ($cyclesBack * $paymentCycleDays) . ' days');
+    // next_payment can be several cycles ahead (stale value or missed renewals).
+    // Walk back one real billing cycle at a time so the window contains today.
+    // Calendar months/years must be used here: a 3-month cycle is not 90 days,
+    // and treating it as such walks back an extra cycle (e.g. Aug 12 → Nov 12).
+    $periodStart = $nextPaymentDate;
+    $guard = 0;
+    while ($periodStart > $currentDate && $guard < 240) {
+        $shifted = shiftSubscriptionDate($periodStart, $cycle, $frequency, -1);
+        if ($shifted === false || $shifted >= $periodStart) {
+            break;
+        }
+        $periodStart = $shifted;
+        $guard++;
+    }
 
-    $daysSinceLastPayment = $lastPaymentDate->diff($currentDate)->days;
-    $subscriptionProgress = ($daysSinceLastPayment / $paymentCycleDays) * 100;
+    if (!empty($start_date)) {
+        try {
+            $startDate = new DateTimeImmutable($start_date);
+            if ($startDate > $periodStart && $startDate < $nextPaymentDate) {
+                $periodStart = $startDate;
+            }
+        } catch (Exception $e) {
+            // Keep the cycle-derived period start.
+        }
+    }
 
-    return floor($subscriptionProgress);
+    $periodDays = $periodStart->diff($nextPaymentDate)->days;
+    if ($periodDays <= 0) {
+        return 0;
+    }
+
+    $elapsedDays = $periodStart->diff($currentDate)->days;
+    return (int) min(100, floor(($elapsedDays / $periodDays) * 100));
 }
 
 function getPricePerMonth($cycle, $frequency, $price)
@@ -162,18 +192,29 @@ function formatDate($date, $lang = 'en')
 function printSubscriptions($subscriptions, $sort, $categories, $members, $i18n, $colorTheme, $imagePath, $disabledToBottom, $mobileNavigation, $showSubscriptionProgress, $currencies, $lang)
 {
     if ($sort === "price") {
-        usort($subscriptions, function ($a, $b) {
-            return $a['price'] < $b['price'] ? 1 : -1;
+        $priceDirection = function_exists('wallos_sort_direction') ? wallos_sort_direction('price') : 'DESC';
+        usort($subscriptions, function ($a, $b) use ($priceDirection) {
+            $cmp = ($a['price'] <=> $b['price']);
+            return $priceDirection === 'DESC' ? -$cmp : $cmp;
         });
         if ($disabledToBottom === 'true') {
             usort($subscriptions, function ($a, $b) {
-                return $a['inactive'] - $b['inactive'];
+                return $a['inactive'] <=> $b['inactive'];
             });
         }
     }
 
-    // One-time purchases always go to the bottom regardless of sort order
-    usort($subscriptions, fn($a, $b) => ($a['one_time'] ? 1 : 0) - ($b['one_time'] ? 1 : 0));
+    // Keep one-time purchases at the bottom without reshuffling the current sort.
+    $regularSubscriptions = [];
+    $oneTimeSubscriptions = [];
+    foreach ($subscriptions as $subscription) {
+        if (!empty($subscription['one_time'])) {
+            $oneTimeSubscriptions[] = $subscription;
+        } else {
+            $regularSubscriptions[] = $subscription;
+        }
+    }
+    $subscriptions = array_merge($regularSubscriptions, $oneTimeSubscriptions);
 
     $currentCategory = 0;
     $currentPayerUserId = 0;

@@ -137,8 +137,19 @@ function fillEditFormFields(subscription) {
   modal.classList.add("is-open");
 }
 
+function closeActionsMenu() {
+  document.querySelectorAll('.actions.is-open').forEach((actions) => {
+    actions.classList.remove('is-open', 'open-above');
+  });
+  document.querySelectorAll('.subscription-container.is-menu-open').forEach((container) => {
+    container.classList.remove('is-menu-open');
+  });
+  currentActions = null;
+}
+
 function openEditSubscription(event, id) {
   event.stopPropagation();
+  closeActionsMenu();
   scrollTopBeforeOpening = window.scrollY;
   const body = document.querySelector('body');
   body.classList.add('no-scroll');
@@ -608,23 +619,46 @@ function setSubscriptionsView(view) {
   document.cookie = "subscriptionsView=" + view + "; expires=" + expirationDate.toUTCString() + "; SameSite=Lax";
 }
 
+function setSortCookie(name, value) {
+  const expirationDate = new Date();
+  expirationDate.setDate(expirationDate.getDate() + 30);
+  document.cookie = name + '=' + encodeURIComponent(value) + '; expires=' + expirationDate.toUTCString() + '; SameSite=Lax';
+}
+
+function defaultSortDirection(sortOption) {
+  return (sortOption === 'price' || sortOption === 'id') ? 'DESC' : 'ASC';
+}
+
+function currentSortDirection() {
+  const match = document.cookie.match(/(?:^|; )sortDirection=([^;]*)/);
+  return match ? decodeURIComponent(match[1]).toUpperCase() : '';
+}
+
 function setSortOption(sortOption) {
   const sortOptionsContainer = document.querySelector("#sort-options");
-  const sortOptionsList = sortOptionsContainer.querySelectorAll("li");
+  const sortOptionsList = sortOptionsContainer.querySelectorAll("li[id]");
+  const alreadySelected = document.getElementById("sort-" + sortOption)?.classList.contains("selected");
   sortOptionsList.forEach((option) => {
-    if (option.getAttribute("id") === "sort-" + sortOption) {
-      option.classList.add("selected");
-    } else {
-      option.classList.remove("selected");
-    }
+    option.classList.toggle("selected", option.getAttribute("id") === "sort-" + sortOption);
   });
-  const daysToExpire = 30;
-  const expirationDate = new Date();
-  expirationDate.setDate(expirationDate.getDate() + daysToExpire);
-  const cookieValue = encodeURIComponent(sortOption) + '; expires=' + expirationDate.toUTCString();
-  document.cookie = 'sortOrder=' + cookieValue + '; SameSite=Lax';
+  if (alreadySelected) {
+    const next = currentSortDirection() === 'DESC' ? 'ASC' : 'DESC';
+    setSortDirection(next, false);
+    return;
+  }
+  setSortCookie('sortOrder', sortOption);
+  setSortDirection(defaultSortDirection(sortOption), false);
+}
+
+function setSortDirection(direction, closeMenu = true) {
+  setSortCookie('sortDirection', direction);
+  document.querySelectorAll('.sort-direction button').forEach((button) => {
+    button.classList.toggle('selected', button.dataset.direction === direction);
+  });
   fetchSubscriptions(null, null, "sort");
-  toggleSortOptions();
+  if (closeMenu) {
+    toggleSortOptions();
+  }
 }
 
 function convertSvgToPng(file, callback) {
@@ -790,7 +824,9 @@ function closeSubMenus() {
   subMenus.forEach(subMenu => {
     subMenu.classList.remove('is-open');
   });
-
+  document.querySelectorAll('.filtermenu-submenu.is-expanded').forEach((menu) => {
+    menu.classList.remove('is-expanded');
+  });
 }
 
 function setSwipeElements() {
@@ -885,11 +921,15 @@ document.addEventListener("DOMContentLoaded", function () {
 
 function toggleSubMenu(subMenu) {
   var subMenu = document.getElementById("filter-" + subMenu);
+  var parent = subMenu ? subMenu.closest('.filtermenu-submenu') : null;
   if (subMenu.classList.contains("is-open")) {
     closeSubMenus();
   } else {
     closeSubMenus();
     subMenu.classList.add("is-open");
+    if (parent) {
+      parent.classList.add("is-expanded");
+    }
   }
 }
 
@@ -1011,6 +1051,11 @@ document.addEventListener('click', function (event) {
   if (currentActions && !currentActions.contains(event.target)) {
     // Click was outside currentActions, close currentActions
     currentActions.classList.remove('is-open');
+    currentActions.classList.remove('open-above');
+    const openContainer = currentActions.closest('.subscription-container');
+    if (openContainer) {
+      openContainer.classList.remove('is-menu-open');
+    }
     currentActions = null;
   }
 });
@@ -1069,11 +1114,19 @@ function expandActions(event, subscriptionId) {
   // Toggle the clicked actions
   actions.classList.toggle('is-open');
 
+  document.querySelectorAll('.subscription-container.is-menu-open').forEach((container) => {
+    container.classList.remove('is-menu-open');
+  });
+
   if (actions.classList.contains('is-open')) {
     actions.classList.remove('open-above');
     const rect = actions.getBoundingClientRect();
     if (rect.bottom > window.innerHeight) {
       actions.classList.add('open-above');
+    }
+    const container = subscriptionDiv.closest('.subscription-container');
+    if (container) {
+      container.classList.add('is-menu-open');
     }
     currentActions = actions;
   } else {
