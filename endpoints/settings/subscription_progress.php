@@ -5,6 +5,23 @@ require_once '../../includes/validate_endpoint.php';
 $postData = file_get_contents("php://input");
 $data = json_decode($postData, true);
 
+if (isset($data['style'])) {
+    $style = $data['style'] === 'ring' ? 'ring' : 'bar';
+    $stmt = $db->prepare('UPDATE settings SET subscription_progress_style = :style WHERE user_id = :userId');
+    $stmt->bindValue(':style', $style, SQLITE3_TEXT);
+    $stmt->bindValue(':userId', $userId, SQLITE3_INTEGER);
+    if ($stmt->execute()) {
+        die(json_encode([
+            'success' => true,
+            'message' => translate('success', $i18n),
+        ]));
+    }
+    die(json_encode([
+        'success' => false,
+        'message' => translate('error', $i18n),
+    ]));
+}
+
 $show_subscription_progress = $data['value'];
 
 // Validate input

@@ -1,4 +1,4 @@
-const STATIC_CACHE = 'static-cache-v3';
+const STATIC_CACHE = 'static-cache-v5';
 const PAGES_CACHE = 'pages-cache-v1';
 const LOGOS_CACHE = 'logos-cache-v2';
 
@@ -16,6 +16,7 @@ const staticAssets = [
     'styles/themes/green.css',
     'styles/themes/yellow.css',
     'styles/themes/purple.css',
+    'styles/themes/pink.css',
     'webfonts/fa-solid-900.woff2',
     'webfonts/fa-solid-900.ttf',
     'webfonts/fa-brands-400.woff2',

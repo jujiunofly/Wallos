@@ -1085,8 +1085,34 @@ function setMobileNavigation() {
 function setShowSubscriptionProgress() {
   const showSubscriptionProgressCheckbox = document.querySelector("#showsubscriptionprogress");
   const value = showSubscriptionProgressCheckbox.checked;
+  const styleRow = document.getElementById('progressStyleRow');
+  if (styleRow) {
+    styleRow.classList.toggle('is-hidden', !value);
+  }
 
   storeSettingsOnDB('subscription_progress', value);
+}
+
+function setSubscriptionProgressStyle(style) {
+  fetch('endpoints/settings/subscription_progress.php', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRF-Token': window.csrfToken,
+    },
+    body: JSON.stringify({ style: style }),
+  })
+    .then((response) => response.json())
+    .then((data) => {
+      if (data.success) {
+        showSuccessMessage(data.message);
+      } else {
+        showErrorMessage(data.message);
+      }
+    })
+    .catch(() => {
+      showErrorMessage(translate('unknown_error'));
+    });
 }
 
 function loadApiUsage(endpoint, containerId, countId, fillId) {

@@ -841,11 +841,16 @@ function setSwipeElements() {
       let translateX = 0;
       const maxTranslateX = element.classList.contains('manual') ? -240 : -180;
 
+      const container = element.closest('.subscription-container');
+
       element.addEventListener('touchstart', (e) => {
         if (element.closest('.subscriptions.grid-view')) return; // no swipe actions in grid view
         startX = e.touches[0].clientX;
         startY = e.touches[0].clientY;
         element.style.transition = ''; // Remove transition for smooth dragging
+        if (container) {
+          container.classList.add('is-swiping');
+        }
       });
 
       element.addEventListener('touchmove', (e) => {
@@ -881,6 +886,10 @@ function setSwipeElements() {
         element.style.transition = 'transform 0.2s ease'; // Smooth snap effect
         element.style.transform = `translateX(${translateX}px)`;
         element.style.zIndex = '1';
+        if (container) {
+          container.classList.remove('is-swiping');
+          container.classList.toggle('is-swiped', translateX !== 0);
+        }
       });
     });
 
@@ -895,7 +904,54 @@ activeFilters['state'] = "";
 activeFilters['renewalType'] = "";
 activeFilters['notifications'] = [];
 
+function lockSubscriptionFormOverscroll() {
+  const modal = document.getElementById('subscription-form');
+  if (!modal) {
+    return;
+  }
+  let startY = 0;
+  modal.addEventListener('touchstart', (event) => {
+    if (!event.touches || !event.touches[0]) {
+      return;
+    }
+    startY = event.touches[0].clientY;
+  }, { passive: true });
+  modal.addEventListener('touchmove', (event) => {
+    if (!modal.classList.contains('is-open') || !event.touches || !event.touches[0]) {
+      return;
+    }
+    const currentY = event.touches[0].clientY;
+    const pullingDown = currentY > startY;
+    const pullingUp = currentY < startY;
+    let scroller = null;
+    let node = event.target;
+    while (node && node !== modal) {
+      if (node instanceof HTMLElement) {
+        const style = window.getComputedStyle(node);
+        if ((style.overflowY === 'auto' || style.overflowY === 'scroll') && node.scrollHeight > node.clientHeight + 1) {
+          scroller = node;
+          break;
+        }
+      }
+      node = node.parentElement;
+    }
+    if (!scroller && modal.scrollHeight > modal.clientHeight + 1) {
+      scroller = modal;
+    }
+    if (!scroller) {
+      event.preventDefault();
+      return;
+    }
+    const atTop = scroller.scrollTop <= 0;
+    const atBottom = scroller.scrollTop + scroller.clientHeight >= scroller.scrollHeight - 1;
+    if ((pullingDown && atTop) || (pullingUp && atBottom)) {
+      event.preventDefault();
+    }
+  }, { passive: false });
+}
+
 document.addEventListener("DOMContentLoaded", function () {
+  lockSubscriptionFormOverscroll();
   var filtermenu = document.querySelector('#filtermenu-button');
   filtermenu.addEventListener('click', function () {
     this.parentElement.querySelector('.filtermenu-content').classList.toggle('is-open');
@@ -916,6 +972,7 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 
   setSwipeElements();
+  updateFilterBadge();
 
 });
 
@@ -1023,6 +1080,7 @@ document.querySelectorAll('.filter-item').forEach(function (item) {
       document.querySelector('#clear-filters').classList.add('hide');
     }
 
+    updateFilterBadge();
     fetchSubscriptions(null, null, "filter");
   });
 });
@@ -1041,7 +1099,18 @@ function clearFilters() {
     item.classList.remove('selected');
   });
   document.querySelector('#clear-filters').classList.add('hide');
+  updateFilterBadge();
   fetchSubscriptions(null, null, "clearfilters");
+}
+
+function updateFilterBadge() {
+  const badge = document.getElementById('filter-badge');
+  if (!badge) {
+    return;
+  }
+  const count = document.querySelectorAll('.filtermenu-content .filter-item.selected').length;
+  badge.textContent = String(count);
+  badge.classList.toggle('is-hidden', count === 0);
 }
 
 let currentActions = null;

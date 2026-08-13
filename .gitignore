@@ -1,7 +1,12 @@
 /db/*
 !/db/wallos.empty.db
+/data/
 /images/uploads/logos/*
 !/images/uploads/logos/wallos.png
+/images/uploads/branding/*
+!/images/uploads/branding/.gitkeep
+/images/uploads/backgrounds/*
+!/images/uploads/backgrounds/.gitkeep
 .DS_Store
 .idea/
 .vscode/

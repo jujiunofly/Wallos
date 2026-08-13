@@ -1,11 +1,12 @@
 services:
   wallos:
     container_name: wallos
-    image: bellamy/wallos:latest
+    build: .
+    image: jujiunofly/wallos:local
     ports:
       - "8282:80/tcp"
     environment:
-      TZ: 'America/Toronto'
+      TZ: 'Asia/Shanghai'
       # Optional OIDC environment variables
       # OIDC_ENABLED: "true"
       # OIDC_PROVIDER_NAME: "Authelia"
@@ -27,6 +28,8 @@ services:
       # SSRF_ALLOWLIST: "auth.example.com,192.168.1.100:8123"
     # Volumes store your data between container upgrades
     volumes:
-      - './db:/var/www/html/db'
-      - './logos:/var/www/html/images/uploads/logos'
+      - './data/db:/var/www/html/db'
+      - './data/logos:/var/www/html/images/uploads/logos'
+      - './data/backgrounds:/var/www/html/images/uploads/backgrounds'
+      - './data/branding:/var/www/html/images/uploads/branding'
     restart: unless-stopped

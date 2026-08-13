@@ -11,10 +11,16 @@ body {
 }
 
 body.no-scroll {
-  overflow-y: hidden;
+  overflow: hidden;
+  overscroll-behavior: none;
 }
 
-@media (max-width: 768px) {
+html:has(body.no-scroll) {
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+@media (max-width: 767px) {
   .mobile-navigation main {
     margin-bottom: 70px;
   }
@@ -509,7 +515,7 @@ button:hover svg .main-color {
 }
 
 .subscription-container>.mobile-actions {
-  display: flex;
+  display: none;
   flex-direction: row;
   position: absolute;
   right: 0px;
@@ -518,6 +524,20 @@ button:hover svg .main-color {
   overflow: hidden;
   border-top-right-radius: 16px;
   border-bottom-right-radius: 16px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+@media (max-width: 768px) {
+  .mobile-navigation .subscriptions:not(.grid-view) .subscription-container>.mobile-actions {
+    display: flex;
+  }
+
+  .mobile-navigation .subscriptions:not(.grid-view) .subscription-container.is-swiping>.mobile-actions,
+  .mobile-navigation .subscriptions:not(.grid-view) .subscription-container.is-swiped>.mobile-actions {
+    opacity: 1;
+    pointer-events: auto;
+  }
 }
 
 .subscription-container>.mobile-actions>button {
@@ -785,6 +805,8 @@ body.light img.logo-theme-variant[data-native-theme="dark"] {
   display: flex;
   justify-content: center;
   align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
 }
 
 .subscription .payment_method img {
@@ -1589,12 +1611,14 @@ button.button.secondary-button:hover {
 input[type="button"].warning-button {
   background-color: var(--error-color);
   border-color: var(--error-color);
+  color: #fff;
 }
 
 input[type="button"].warning-button:hover,
 button.button.warning-button:hover {
-  background-color: rgba(var(--error-color-rgb), 0.8);
-  border-color: rgba(var(--error-color-rgb), 0.8);
+  background-color: rgba(var(--error-color-rgb), 0.85);
+  border-color: rgba(var(--error-color-rgb), 0.85);
+  color: #fff;
 }
 
 input[type="submit"]:hover,
@@ -1698,7 +1722,7 @@ textarea.thin {
 .icon-search {
   display: none;
   position: fixed;
-  left: 50%;
+  left: calc(var(--app-sidebar-width, 0px) + (100vw - var(--app-sidebar-width, 0px)) / 2);
   top: 50%;
   transform: translate(-50%, -50%);
   width: 92%;
@@ -1994,14 +2018,15 @@ button.dark-theme-button i {
   box-shadow: var(--box-shadow);
   box-sizing: border-box;
   position: fixed;
-  left: 50%;
+  left: calc(var(--app-sidebar-width, 0px) + (100vw - var(--app-sidebar-width, 0px)) / 2);
   top: 50%;
-  transform: translateX(-50%) translateY(-50%);
-  z-index: 50;
+  transform: translate(-50%, -50%);
+  z-index: 100;
   max-width: 800px;
   max-height: calc(100vh - 34px);
   overflow: auto;
   overflow-y: auto;
+  overscroll-behavior: none;
   width: 90%;
   display: none;
   scrollbar-width: none;
@@ -2041,7 +2066,14 @@ button.dark-theme-button i {
   .subscription-form,
   .subscription-modal {
     width: 100%;
-    max-height: 100dvh;
+    max-height: calc(100dvh - 20px);
+    overflow: hidden;
+    overscroll-behavior: none;
+    touch-action: pan-y;
+  }
+
+  .subscription-form #subs-form {
+    overscroll-behavior: none;
   }
 
   .subscription-form .buttons input {
@@ -2661,14 +2693,18 @@ button.dark-theme-button i {
 /* Theme Selector */
 
 .theme {
-  flex-grow: 1;
+  flex: 0 0 auto;
+  width: 162px;
 }
 
 .theme-preview {
   cursor: pointer;
   border: 1px solid #ccc;
   border-radius: 8px;
+  width: 162px;
+  height: 64px;
   padding: 20px 15px 20px 10px;
+  box-sizing: border-box;
   display: flex;
   gap: 15px;
   flex-direction: row;
@@ -2751,6 +2787,18 @@ button.dark-theme-button i {
 
 .theme-preview.purple .hover-color {
   background-color: #5e42cd;
+}
+
+.theme-preview.pink .main-color {
+  background-color: #db2777;
+}
+
+.theme-preview.pink .accent-color {
+  background-color: #f9a8d4;
+}
+
+.theme-preview.pink .hover-color {
+  background-color: #be185d;
 }
 
 .custom-colors {
@@ -3356,7 +3404,7 @@ input[type="radio"]:checked+label::after {
   display: block;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 767px) {
   .mobile-nav {
     position: fixed;
     bottom: 0px;
@@ -3715,12 +3763,16 @@ input[type="radio"]:checked+label::after {
 
 .subscriptions.grid-view .subscription {
   flex-grow: 1;
+  height: 100%;
   padding: 18px 18px 20px;
   justify-content: flex-start;
 }
 
 .subscriptions.grid-view .subscription-main {
   display: grid;
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
   grid-template-columns: minmax(0, 1fr) auto;
   grid-template-rows: auto auto 1fr auto auto;
   grid-template-areas:
@@ -3778,6 +3830,7 @@ input[type="radio"]:checked+label::after {
   flex-basis: auto;
   flex-grow: 0;
   justify-content: flex-start;
+  align-self: end;
   font-size: 13px;
   color: var(--text-muted);
 }
@@ -3787,6 +3840,7 @@ input[type="radio"]:checked+label::after {
   flex-basis: auto;
   flex-grow: 0;
   justify-content: flex-start;
+  align-self: end;
   font-size: 13px;
   color: var(--text-muted);
 }
@@ -3892,7 +3946,7 @@ body.details-open {
 .subscription-details {
   display: none;
   position: fixed;
-  left: 50%;
+  left: calc(var(--app-sidebar-width, 0px) + (100vw - var(--app-sidebar-width, 0px)) / 2);
   top: 50%;
   transform: translate(-50%, -50%);
   width: 92%;
@@ -3905,7 +3959,7 @@ body.details-open {
   box-shadow: var(--shadow-pop);
   box-sizing: border-box;
   padding: 24px;
-  z-index: 50;
+  z-index: 100;
   color: var(--text-color);
 }
 

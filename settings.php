@@ -1470,57 +1470,13 @@ if ($budgetPeriodAnchorDate === '1970-01-01' || !preg_match('/^\d{4}-\d{2}-\d{2}
             <div>
                 <form class="theme-selector">
                     <h3><?= translate('colors', $i18n) ?></h3>
+                    <h4 class="appearance-subhead"><?= translate('colors_light', $i18n) ?></h4>
                     <div class="form-group-inline wrap">
-                        <div class="theme">
-                            <input type="radio" name="theme" id="theme-blue" value="blue" onClick="setTheme('blue')"
-                                <?= $settings['color_theme'] == 'blue' ? 'checked' : '' ?>>
-                            <label for="theme-blue"
-                                class="theme-preview blue <?= $settings['color_theme'] == 'blue' ? 'is-selected' : '' ?>">
-                                <span class="main-color"></span>
-                                <span class="accent-color"></span>
-                                <span class="hover-color"></span>
-                            </label>
-                        </div>
-                        <div class="theme">
-                            <input type="radio" name="theme" id="theme-green" value="green" onClick="setTheme('green')"
-                                <?= $settings['color_theme'] == 'green' ? 'checked' : '' ?>>
-                            <label for="theme-green"
-                                class="theme-preview green <?= $settings['color_theme'] == 'green' ? 'is-selected' : '' ?>">
-                                <span class="main-color"></span>
-                                <span class="accent-color"></span>
-                                <span class="hover-color"></span>
-                            </label>
-                        </div>
-                        <div class="theme">
-                            <input type="radio" name="theme" id="theme-red" value="red" onClick="setTheme('red')"
-                                <?= $settings['color_theme'] == 'red' ? 'checked' : '' ?>>
-                            <label for="theme-red"
-                                class="theme-preview red <?= $settings['color_theme'] == 'red' ? 'is-selected' : '' ?>">
-                                <span class="main-color"></span>
-                                <span class="accent-color"></span>
-                                <span class="hover-color"></span>
-                            </label>
-                        </div>
-                        <div class="theme">
-                            <input type="radio" name="theme" id="theme-yellow" value="yellow"
-                                onClick="setTheme('yellow')" <?= $settings['color_theme'] == 'yellow' ? 'checked' : '' ?>>
-                            <label for="theme-yellow"
-                                class="theme-preview yellow <?= $settings['color_theme'] == 'yellow' ? 'is-selected' : '' ?>">
-                                <span class="main-color"></span>
-                                <span class="accent-color"></span>
-                                <span class="hover-color"></span>
-                            </label>
-                        </div>
-                        <div class="theme">
-                            <input type="radio" name="theme" id="theme-purple" value="purple"
-                                onClick="setTheme('purple')" <?= $settings['color_theme'] == 'purple' ? 'checked' : '' ?>>
-                            <label for="theme-purple"
-                                class="theme-preview purple <?= $settings['color_theme'] == 'purple' ? 'is-selected' : '' ?>">
-                                <span class="main-color"></span>
-                                <span class="accent-color"></span>
-                                <span class="hover-color"></span>
-                            </label>
-                        </div>
+                        <?php wallos_render_color_theme_picker('theme_light', 'light', $settings['color_theme'], $i18n); ?>
+                    </div>
+                    <h4 class="appearance-subhead"><?= translate('colors_dark', $i18n) ?></h4>
+                    <div class="form-group-inline wrap">
+                        <?php wallos_render_color_theme_picker('theme_dark', 'dark', $settings['color_theme_dark'], $i18n); ?>
                     </div>
                 </form>
             </div>
@@ -1553,6 +1509,58 @@ if ($budgetPeriodAnchorDate === '1970-01-01' || !preg_match('/^\d{4}-\d{2}-\d{2}
                         onClick="saveCustomColors()" class="buton thin mobile-grow" id="save-colors">
                 </div>
             </div>
+            <div class="appearance-logo">
+                <h3><?= translate('app_icon', $i18n) ?></h3>
+                <p class="settings-notes"><i class="fa-solid fa-circle-info"></i> <?= translate('app_icon_info', $i18n) ?></p>
+                <div class="app-logo-editor">
+                    <div class="media-anchor">
+                        <div class="app-logo-preview app-logo-slot media-picker-toggle" id="appLogoPreview" data-picker="logoPicker" title="<?= translate('choose_image', $i18n) ?>">
+                            <?php wallos_render_app_logo($appearance['app_logo'] ?? ''); ?>
+                        </div>
+                        <div id="logoPicker" class="media-picker-host">
+                            <?php wallos_render_media_picker('branding', $userId, $appearance['app_logo'] ?? '', 'appLogoFile', 'image/jpeg,image/png,image/webp,image/gif,image/svg+xml', $i18n); ?>
+                        </div>
+                    </div>
+                    <div class="app-logo-actions">
+                        <button type="button" class="button secondary-button thin media-picker-toggle" data-picker="logoPicker"><?= translate('choose_image', $i18n) ?></button>
+                        <input type="button" class="secondary-button thin" id="resetAppLogo" value="<?= translate('reset_app_icon', $i18n) ?>">
+                    </div>
+                </div>
+                <h4 class="appearance-subhead"><?= translate('favicon', $i18n) ?></h4>
+                <p class="settings-notes"><i class="fa-solid fa-circle-info"></i> <?= translate('favicon_info', $i18n) ?></p>
+                <div class="app-logo-editor">
+                    <div class="media-anchor">
+                        <div class="app-favicon-preview media-picker-toggle" id="appFaviconPreview" data-picker="faviconPicker" title="<?= translate('choose_image', $i18n) ?>">
+                            <?php
+                            $faviconPreview = wallos_app_favicon_url($appearance['app_favicon'] ?? '');
+                            if ($faviconPreview !== '') {
+                                echo '<img src="' . htmlspecialchars($faviconPreview, ENT_QUOTES, 'UTF-8') . '" alt="">';
+                            } else {
+                                echo '<img src="images/icon/favicon.ico" alt="">';
+                            }
+                            ?>
+                        </div>
+                        <div id="faviconPicker" class="media-picker-host">
+                            <?php wallos_render_media_picker('branding', $userId, $appearance['app_favicon'] ?? '', 'appFaviconFile', 'image/png,image/x-icon,image/vnd.microsoft.icon,image/svg+xml,image/webp,image/jpeg', $i18n); ?>
+                        </div>
+                    </div>
+                    <div class="app-logo-actions">
+                        <button type="button" class="button secondary-button thin media-picker-toggle" data-picker="faviconPicker"><?= translate('choose_image', $i18n) ?></button>
+                        <input type="button" class="secondary-button thin" id="resetAppFavicon" value="<?= translate('reset_favicon', $i18n) ?>">
+                    </div>
+                </div>
+                <h4 class="appearance-subhead"><?= translate('header_title', $i18n) ?></h4>
+                <div class="form-group">
+                    <input type="text" id="headerTitleInput" maxlength="40" placeholder="<?= translate('header_title_placeholder', $i18n) ?>" value="<?= htmlspecialchars($appearance['header_title'] ?? '') ?>">
+                </div>
+                <div class="glass-sliders">
+                    <div class="slider-row">
+                        <label for="headerTitleSize"><?= translate('header_title_size', $i18n) ?></label>
+                        <input type="range" id="headerTitleSize" min="12" max="32" value="<?= (int) ($appearance['header_title_size'] ?? 18) ?>">
+                        <span class="slider-value"><span id="headerTitleSizeValue"><?= (int) ($appearance['header_title_size'] ?? 18) ?></span>px</span>
+                    </div>
+                </div>
+            </div>
             <div class="appearance-glass">
                 <h3><?= translate('glass_effect', $i18n) ?></h3>
                 <div class="form-group-inline">
@@ -1560,13 +1568,15 @@ if ($budgetPeriodAnchorDate === '1970-01-01' || !preg_match('/^\d{4}-\d{2}-\d{2}
                     <label for="glassEnabled"><?= translate('enable_glass', $i18n) ?></label>
                 </div>
                 <div class="glass-sliders">
-                    <div>
-                        <label for="glassBlur"><?= translate('glass_blur', $i18n) ?> <span id="glassBlurValue"><?= (int) $appearance['glass_blur'] ?></span>px</label>
+                    <div class="slider-row">
+                        <label for="glassBlur"><?= translate('glass_blur', $i18n) ?></label>
                         <input type="range" id="glassBlur" min="4" max="40" value="<?= (int) $appearance['glass_blur'] ?>">
+                        <span class="slider-value"><span id="glassBlurValue"><?= (int) $appearance['glass_blur'] ?></span>px</span>
                     </div>
-                    <div>
-                        <label for="glassOpacity"><?= translate('glass_opacity', $i18n) ?> <span id="glassOpacityValue"><?= (int) $appearance['glass_opacity'] ?></span>%</label>
+                    <div class="slider-row">
+                        <label for="glassOpacity"><?= translate('glass_opacity', $i18n) ?></label>
                         <input type="range" id="glassOpacity" min="20" max="95" value="<?= (int) $appearance['glass_opacity'] ?>">
+                        <span class="slider-value"><span id="glassOpacityValue"><?= (int) $appearance['glass_opacity'] ?></span>%</span>
                     </div>
                 </div>
             </div>
@@ -1584,7 +1594,6 @@ if ($budgetPeriodAnchorDate === '1970-01-01' || !preg_match('/^\d{4}-\d{2}-\d{2}
                     foreach ($bgSlots as $slot => $label) {
                         $parsed = wallos_parse_background_value($appearance[$slot] ?? '');
                         $selectValue = $parsed['type'] === 'none' ? '' : ($parsed['type'] === 'preset' ? 'preset:' . $parsed['value'] : $parsed['type']);
-                        $previewCss = wallos_background_css($appearance[$slot] ?? '', str_contains($slot, 'dark'));
                         ?>
                         <div class="appearance-slot" data-slot="<?= $slot ?>">
                             <h4><?= $label ?></h4>
@@ -1597,20 +1606,33 @@ if ($budgetPeriodAnchorDate === '1970-01-01' || !preg_match('/^\d{4}-\d{2}-\d{2}
                                 <option value="image" <?= $parsed['type'] === 'image' ? 'selected' : '' ?>><?= translate('background_image', $i18n) ?></option>
                             </select>
                             <input type="hidden" class="bg-current" value="<?= htmlspecialchars($appearance[$slot] ?? '') ?>">
-                            <input type="color" class="bg-color <?= $parsed['type'] === 'color' ? '' : 'hide' ?>" value="<?= $parsed['type'] === 'color' ? htmlspecialchars($parsed['value']) : '#e2e8f0' ?>">
-                            <label class="button secondary-button thin bg-file-button <?= $parsed['type'] === 'image' ? '' : 'hide' ?>">
-                                <i class="fa-solid fa-image"></i>
-                                <span><?= translate('choose_image', $i18n) ?></span>
-                                <input type="file" class="bg-file" accept="image/jpeg,image/png,image/webp">
+                            <label class="bg-color-row <?= $parsed['type'] === 'color' ? '' : 'is-hidden' ?>">
+                                <span><?= translate('solid_color', $i18n) ?></span>
+                                <input type="color" class="bg-color" value="<?= $parsed['type'] === 'color' ? htmlspecialchars($parsed['value']) : '#e2e8f0' ?>">
                             </label>
-                            <div class="appearance-preview" style="<?= $previewCss !== '' ? 'background:' . htmlspecialchars($previewCss, ENT_QUOTES) : '' ?>"></div>
+                            <div class="bg-image-row <?= $parsed['type'] === 'image' ? '' : 'is-hidden' ?>">
+                                <div class="bg-thumb-wrap">
+                                    <?php
+                                    $thumbSrc = $parsed['type'] === 'image' && $parsed['value'] !== ''
+                                        ? 'images/uploads/backgrounds/' . htmlspecialchars($parsed['value'])
+                                        : '';
+                                    ?>
+                                    <button type="button" class="bg-thumb-btn media-picker-toggle" data-picker="bgPicker_<?= $slot ?>" data-slot="<?= $slot ?>" title="<?= translate('choose_image', $i18n) ?>">
+                                        <img class="bg-thumb<?= $thumbSrc === '' ? ' is-empty' : '' ?>" alt="" <?= $thumbSrc !== '' ? 'src="' . $thumbSrc . '"' : '' ?>>
+                                        <span class="bg-thumb-ph" aria-hidden="true"><i class="fa-solid fa-image"></i></span>
+                                    </button>
+                                    <div id="bgPicker_<?= $slot ?>" class="media-picker-host">
+                                        <?php wallos_render_media_picker('background', $userId, $parsed['type'] === 'image' ? $parsed['value'] : '', $slot . '_file', 'image/jpeg,image/png,image/webp', $i18n); ?>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                         <?php
                     }
                     ?>
                 </div>
                 <div class="form-group-inline" style="margin-top:16px">
-                    <input type="button" class="button thin mobile-grow hide" id="saveAppearance" value="<?= translate('save_appearance', $i18n) ?>" onClick="saveAppearance()">
+                    <input type="button" class="button thin mobile-grow is-hidden" id="saveAppearance" value="<?= translate('save_appearance', $i18n) ?>" onClick="saveAppearance()">
                 </div>
             </div>
             <?php
@@ -1668,15 +1690,8 @@ if ($budgetPeriodAnchorDate === '1970-01-01' || !preg_match('/^\d{4}-\d{2}-\d{2}
             </div>
             <h3><?= translate('timezone', $i18n) ?></h3>
             <div class="form-group">
-                <select id="userTimezone" onChange="persistAppearance({ silent: false })">
-                    <option value=""><?= translate('use_server_timezone', $i18n) ?> (<?= htmlspecialchars(date_default_timezone_get()) ?>)</option>
-                    <?php
-                    $currentTimezone = $appearance['timezone'] ?? '';
-                    foreach (DateTimeZone::listIdentifiers() as $tzId) {
-                        $selected = $currentTimezone === $tzId ? 'selected' : '';
-                        echo '<option value="' . htmlspecialchars($tzId) . '" ' . $selected . '>' . htmlspecialchars($tzId) . '</option>';
-                    }
-                    ?>
+                <select id="userTimezone" onChange="saveTimezone(this.value)">
+                    <?= wallos_timezone_options_html($appearance['timezone'] ?? '', $i18n) ?>
                 </select>
             </div>
             <h3><?= translate('experience', $i18n) ?></h3>
@@ -1694,6 +1709,18 @@ if ($budgetPeriodAnchorDate === '1970-01-01' || !preg_match('/^\d{4}-\d{2}-\d{2}
                     <input type="checkbox" id="showsubscriptionprogress" name="showsubscriptionprogress"
                         onChange="setShowSubscriptionProgress()" <?= $settings['show_subscription_progress'] ? 'checked' : '' ?>>
                     <label for="showsubscriptionprogress"><?= translate('show_subscription_progress', $i18n) ?></label>
+                </div>
+                <div class="form-group-inline progress-style-row<?= $settings['show_subscription_progress'] ? '' : ' is-hidden' ?>" id="progressStyleRow">
+                    <label class="progress-style-option">
+                        <input type="radio" name="progressstyle" value="bar" onChange="setSubscriptionProgressStyle('bar')"
+                            <?= ($settings['subscription_progress_style'] ?? 'bar') !== 'ring' ? 'checked' : '' ?>>
+                        <?= translate('progress_style_bar', $i18n) ?>
+                    </label>
+                    <label class="progress-style-option">
+                        <input type="radio" name="progressstyle" value="ring" onChange="setSubscriptionProgressStyle('ring')"
+                            <?= ($settings['subscription_progress_style'] ?? 'bar') === 'ring' ? 'checked' : '' ?>>
+                        <?= translate('progress_style_ring', $i18n) ?>
+                    </label>
                 </div>
             </div>
             <div>

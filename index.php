@@ -72,8 +72,8 @@ $result = $stmt->execute();
 $user = $result->fetchArray(SQLITE3_ASSOC);
 $first_name = $user['firstname'] ?? $user['username'] ?? '';
 
-// Fetch the next 3 enabled subscriptions up for payment
-$stmt = $db->prepare("SELECT id, logo, logo_text_color, logo_variant, name, price, currency_id, next_payment, inactive FROM subscriptions WHERE user_id = :userId AND next_payment >= date('now') AND inactive = 0 AND cycle != 5 ORDER BY next_payment ASC LIMIT 3");
+// Fetch the next upcoming subscriptions
+$stmt = $db->prepare("SELECT id, logo, logo_text_color, logo_variant, name, price, currency_id, next_payment, inactive FROM subscriptions WHERE user_id = :userId AND next_payment >= date('now') AND next_payment <= date('now', '+30 days') AND inactive = 0 AND cycle != 5 ORDER BY next_payment ASC LIMIT 12");
 $stmt->bindValue(':userId', $userId, SQLITE3_INTEGER);
 $result = $stmt->execute();
 $upcomingSubscriptions = [];
@@ -138,173 +138,143 @@ while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
     $heroNextName = !empty($upcomingSubscriptions) ? $upcomingSubscriptions[0]['name'] : '';
     $heroCurrencyCode = $currencies[$userData['main_currency']]['code'];
     ?>
-    <div class="dashboard-hero">
-        <div>
-            <p class="dashboard-kicker"><?= translate('dashboard', $i18n) ?></p>
-            <h1><?= translate('hello', $i18n) ?> <?= htmlspecialchars($first_name) ?></h1>
+    <div class="dashboard-panel dashboard-shell">
+        <div class="dashboard-hero">
+            <div>
+                <p class="dashboard-kicker"><?= translate('dashboard', $i18n) ?></p>
+                <h1><?= translate('hello', $i18n) ?> <?= htmlspecialchars($first_name) ?></h1>
+            </div>
         </div>
-        <div class="dashboard-hero-stats">
-            <?php if (isset($totalCostPerMonth)) { ?>
-                <div class="dashboard-hero-stat">
+
+        <div class="dashboard-kpis">
+            <?php
+            $kpiTone = 0;
+            if (isset($totalCostPerMonth)) {
+                $kpiTone++;
+                ?>
+                <div class="dashboard-kpi kpi-tone-<?= $kpiTone ?>">
                     <span><?= translate('monthly_cost', $i18n) ?></span>
                     <strong><?= CurrencyFormatter::format($totalCostPerMonth, $heroCurrencyCode) ?></strong>
                 </div>
-            <?php } ?>
-            <?php if (isset($activeSubscriptions)) { ?>
-                <div class="dashboard-hero-stat">
+                <?php
+            }
+            if (isset($activeSubscriptions)) {
+                $kpiTone++;
+                ?>
+                <div class="dashboard-kpi kpi-tone-<?= $kpiTone ?>">
                     <span><?= translate('active_subscriptions', $i18n) ?></span>
                     <strong><?= (int) $activeSubscriptions ?></strong>
                 </div>
-            <?php } ?>
-            <div class="dashboard-hero-stat">
+                <?php
+            }
+            if (isset($totalCostPerYear)) {
+                $kpiTone++;
+                ?>
+                <div class="dashboard-kpi kpi-tone-<?= $kpiTone ?>">
+                    <span><?= translate('yearly_cost', $i18n) ?></span>
+                    <strong><?= CurrencyFormatter::format($totalCostPerYear, $heroCurrencyCode) ?></strong>
+                </div>
+                <?php
+            }
+            $kpiTone++;
+            ?>
+            <div class="dashboard-kpi kpi-tone-<?= $kpiTone ?>">
                 <span><?= translate('next_payment', $i18n) ?></span>
                 <strong title="<?= htmlspecialchars($heroNextName) ?>"><?= htmlspecialchars($heroNextPayment) ?></strong>
             </div>
+            <?php if (isset($monthlyBudget) && $monthlyBudget > 0 && isset($monthlyBudgetLeft)) {
+                $kpiTone++;
+                ?>
+                <div class="dashboard-kpi kpi-tone-<?= $kpiTone ?>">
+                    <span><?= translate('budget_remaining', $i18n) ?></span>
+                    <strong><?= formatPrice($monthlyBudgetLeft, $heroCurrencyCode, $currencies) ?></strong>
+                    <?php if (isset($monthlyBudgetUsed)) { ?>
+                        <em><?= number_format($monthlyBudgetUsed, 1) ?>% <?= translate('budget_used', $i18n) ?></em>
+                    <?php } ?>
+                </div>
+            <?php } ?>
+            <?php if (isset($inactiveSubscriptions) && $inactiveSubscriptions > 0 && isset($totalSavingsPerMonth) && $totalSavingsPerMonth > 0) {
+                $kpiTone++;
+                ?>
+                <div class="dashboard-kpi kpi-tone-<?= $kpiTone ?>">
+                    <span><?= translate('monthly_savings', $i18n) ?></span>
+                    <strong><?= CurrencyFormatter::format($totalSavingsPerMonth, $heroCurrencyCode) ?></strong>
+                </div>
+            <?php } ?>
         </div>
-    </div>
 
-    <?php
-    // If there are overdue subscriptions, display them
-    if ($hasOverdueSubscriptions) {
-        ?>
-        <div class="dashboard-panel panel-overdue">
-            <h2><?= translate('overdue_renewals', $i18n) ?></h2>
-            <div class="dashboard-rows">
-                    <?php
-
-                    foreach ($overdueSubscriptions as $subscription) {
-                        $subscriptionName = htmlspecialchars($subscription['name']);
-                        $subscriptionPrice = $subscription['price'];
-                        $subscriptionCurrency = $subscription['currency_id'];
-                        $subscriptionNextPayment = $subscription['next_payment'];
-                        $subscriptionDisplayNextPayment = formatDate($subscriptionNextPayment, $lang);
-                        $subscriptionDisplayPrice = formatPrice($subscriptionPrice, $currencies[$subscriptionCurrency]['code'], $currencies);
-
-                        ?>
-                            <button type="button" class="dashboard-row" onClick="showSubscriptionDetails(event, <?= $subscription['id'] ?>)" data-id="<?= $subscription['id'] ?>">
-                                <span class="dashboard-row-logo">
-                                    <?php
-                                    if (empty($subscription['logo'])) {
-                                        echo '<span class="dashboard-row-initial">' . htmlspecialchars(mb_substr($subscription['name'], 0, 1)) . '</span>';
-                                    } else {
-                                        $subscriptionLogoSrc = "images/uploads/logos/" . $subscription['logo'];
-                                        $subscriptionLogoVariantSrc = !empty($subscription['logo_variant']) ? "images/uploads/logos/" . $subscription['logo_variant'] : null;
-                                        echo renderThemedLogoImg($subscriptionLogoSrc, $subscriptionLogoVariantSrc, $subscription['logo_text_color'] ?? null, 'subscription-item-logo', 'alt="' . $subscriptionName . ' logo" title="' . $subscriptionName . '"');
-                                    }
-                                    ?>
-                                </span>
-                                <span class="dashboard-row-copy">
-                                    <strong><?= $subscriptionName ?></strong>
-                                    <em><?= $subscriptionDisplayNextPayment ?></em>
-                                </span>
-                                <span class="dashboard-row-price"><?= $subscriptionDisplayPrice ?></span>
-                            </button>
-                        <?php
-                    }
-                    ?>
-            </div>
-        </div>
-        <?php
-    }
-    ?>
-
-    <div class="dashboard-layout">
-        <div class="dashboard-main">
-            <div class="dashboard-panel panel-upcoming">
-                <h2><?= translate('upcoming_payments', $i18n) ?></h2>
+        <?php if ($hasOverdueSubscriptions) { ?>
+            <div class="dashboard-block dashboard-overdue">
+                <h2><?= translate('overdue_renewals', $i18n) ?></h2>
                 <div class="dashboard-rows">
-                    <?php
-                    if (empty($upcomingSubscriptions)) {
+                    <?php foreach ($overdueSubscriptions as $subscription) {
+                        $subscriptionName = htmlspecialchars($subscription['name']);
+                        $subscriptionDisplayNextPayment = formatDate($subscription['next_payment'], $lang);
+                        $subscriptionDisplayPrice = formatPrice($subscription['price'], $currencies[$subscription['currency_id']]['code'], $currencies);
                         ?>
-                        <p class="dashboard-empty"><?= translate('no_upcoming_payments', $i18n) ?></p>
-                        <?php
-                    } else {
-                        foreach ($upcomingSubscriptions as $subscription) {
-                            $subscriptionName = htmlspecialchars($subscription['name']);
-                            $subscriptionPrice = $subscription['price'];
-                            $subscriptionCurrency = $subscription['currency_id'];
-                            $subscriptionNextPayment = $subscription['next_payment'];
-                            $subscriptionDisplayNextPayment = formatDate($subscriptionNextPayment, $lang);
-                            $subscriptionDisplayPrice = formatPrice($subscriptionPrice, $currencies[$subscriptionCurrency]['code'], $currencies);
-                            ?>
-                            <button type="button" class="dashboard-row" onClick="showSubscriptionDetails(event, <?= $subscription['id'] ?>)" data-id="<?= $subscription['id'] ?>">
-                                <span class="dashboard-row-logo">
-                                    <?php
-                                    if (empty($subscription['logo'])) {
-                                        echo '<span class="dashboard-row-initial">' . htmlspecialchars(mb_substr($subscription['name'], 0, 1)) . '</span>';
-                                    } else {
-                                        $subscriptionLogoSrc = "images/uploads/logos/" . $subscription['logo'];
-                                        $subscriptionLogoVariantSrc = !empty($subscription['logo_variant']) ? "images/uploads/logos/" . $subscription['logo_variant'] : null;
-                                        echo renderThemedLogoImg($subscriptionLogoSrc, $subscriptionLogoVariantSrc, $subscription['logo_text_color'] ?? null, 'subscription-item-logo', 'alt="' . $subscriptionName . ' logo" title="' . $subscriptionName . '"');
-                                    }
-                                    ?>
-                                </span>
-                                <span class="dashboard-row-copy">
-                                    <strong><?= $subscriptionName ?></strong>
-                                    <em><?= $subscriptionDisplayNextPayment ?></em>
-                                </span>
-                                <span class="dashboard-row-price"><?= $subscriptionDisplayPrice ?></span>
-                            </button>
-                            <?php
-                        }
-                    }
-                    ?>
+                        <button type="button" class="dashboard-row" onClick="showSubscriptionDetails(event, <?= $subscription['id'] ?>)" data-id="<?= $subscription['id'] ?>">
+                            <span class="dashboard-row-logo">
+                                <?php
+                                if (empty($subscription['logo'])) {
+                                    echo '<span class="dashboard-row-initial">' . htmlspecialchars(mb_substr($subscription['name'], 0, 1)) . '</span>';
+                                } else {
+                                    $subscriptionLogoSrc = "images/uploads/logos/" . $subscription['logo'];
+                                    $subscriptionLogoVariantSrc = !empty($subscription['logo_variant']) ? "images/uploads/logos/" . $subscription['logo_variant'] : null;
+                                    echo renderThemedLogoImg($subscriptionLogoSrc, $subscriptionLogoVariantSrc, $subscription['logo_text_color'] ?? null, 'subscription-item-logo', 'alt="' . $subscriptionName . ' logo" title="' . $subscriptionName . '"');
+                                }
+                                ?>
+                            </span>
+                            <span class="dashboard-row-copy">
+                                <strong><?= $subscriptionName ?></strong>
+                                <em><?= $subscriptionDisplayNextPayment ?></em>
+                            </span>
+                            <span class="dashboard-row-price"><?= $subscriptionDisplayPrice ?></span>
+                        </button>
+                    <?php } ?>
                 </div>
             </div>
-        </div>
-        <aside class="dashboard-side">
-            <?php if (isset($totalCostPerMonth)) { ?>
-            <div class="dashboard-panel panel-budget">
-                <h2><?= translate('monthly_budget', $i18n) ?></h2>
-                <dl class="dashboard-metrics">
-                    <div>
-                        <dt><?= translate("monthly_cost", $i18n) ?></dt>
-                        <dd><?= CurrencyFormatter::format($totalCostPerMonth, $currencies[$userData['main_currency']]['code']) ?></dd>
-                    </div>
-                    <?php if (isset($monthlyBudget) && $monthlyBudget > 0) { ?>
-                        <div>
-                            <dt><?= translate("budget", $i18n) ?></dt>
-                            <dd><?= formatPrice($monthlyBudget, $currencies[$userData['main_currency']]['code'], $currencies) ?></dd>
-                        </div>
-                        <?php if (isset($monthlyBudgetUsed)) { ?>
-                            <div>
-                                <dt><?= translate("budget_used", $i18n) ?></dt>
-                                <dd><?= number_format($monthlyBudgetUsed, 2) ?>%</dd>
-                            </div>
-                        <?php } ?>
-                        <div>
-                            <dt><?= translate("budget_remaining", $i18n) ?></dt>
-                            <dd><?= formatPrice($monthlyBudgetLeft, $currencies[$userData['main_currency']]['code'], $currencies) ?></dd>
-                        </div>
-                    <?php } ?>
-                </dl>
-            </div>
-            <?php } ?>
+        <?php } ?>
 
-            <?php if (isset($activeSubscriptions) && $activeSubscriptions > 0) { ?>
-            <div class="dashboard-panel panel-overview">
-                <h2><?= translate('your_subscriptions', $i18n) ?></h2>
-                <dl class="dashboard-metrics">
-                    <div>
-                        <dt><?= translate('active_subscriptions', $i18n) ?></dt>
-                        <dd><?= $activeSubscriptions ?></dd>
-                    </div>
-                    <?php if (isset($totalCostPerYear)) { ?>
-                        <div>
-                            <dt><?= translate('yearly_cost', $i18n) ?></dt>
-                            <dd><?= CurrencyFormatter::format($totalCostPerYear, $currencies[$userData['main_currency']]['code']) ?></dd>
+        <div class="dashboard-block">
+            <h2><?= translate('upcoming_payments', $i18n) ?></h2>
+            <div class="dashboard-rows dashboard-timeline<?= count($upcomingSubscriptions) > 6 ? ' is-split' : '' ?>" style="--timeline-rows: <?= max(1, (int) ceil(count($upcomingSubscriptions) / 2)) ?>;">
+                <?php
+                if (empty($upcomingSubscriptions)) {
+                    echo '<p class="dashboard-empty">' . translate('no_upcoming_payments', $i18n) . '</p>';
+                } else {
+                    foreach ($upcomingSubscriptions as $index => $subscription) {
+                        $subscriptionName = htmlspecialchars($subscription['name']);
+                        $subscriptionDisplayNextPayment = formatDate($subscription['next_payment'], $lang);
+                        $subscriptionDisplayPrice = formatPrice($subscription['price'], $currencies[$subscription['currency_id']]['code'], $currencies);
+                        $step = $index + 1;
+                        ?>
+                        <div class="dashboard-timeline-item<?= $index >= 6 ? ' is-extra' : '' ?>">
+                            <button type="button" class="dashboard-row" onClick="showSubscriptionDetails(event, <?= $subscription['id'] ?>)" data-id="<?= $subscription['id'] ?>">
+                                <span class="dashboard-timeline-step"><?= $step ?></span>
+                                <span class="dashboard-row-logo">
+                                    <?php
+                                    if (empty($subscription['logo'])) {
+                                        echo '<span class="dashboard-row-initial">' . htmlspecialchars(mb_substr($subscription['name'], 0, 1)) . '</span>';
+                                    } else {
+                                        $subscriptionLogoSrc = "images/uploads/logos/" . $subscription['logo'];
+                                        $subscriptionLogoVariantSrc = !empty($subscription['logo_variant']) ? "images/uploads/logos/" . $subscription['logo_variant'] : null;
+                                        echo renderThemedLogoImg($subscriptionLogoSrc, $subscriptionLogoVariantSrc, $subscription['logo_text_color'] ?? null, 'subscription-item-logo', 'alt="' . $subscriptionName . ' logo" title="' . $subscriptionName . '"');
+                                    }
+                                    ?>
+                                </span>
+                                <span class="dashboard-row-copy">
+                                    <strong><?= $subscriptionName ?></strong>
+                                    <em><?= $subscriptionDisplayNextPayment ?></em>
+                                </span>
+                                <span class="dashboard-row-price"><?= $subscriptionDisplayPrice ?></span>
+                            </button>
                         </div>
-                    <?php } ?>
-                    <?php if (isset($inactiveSubscriptions) && $inactiveSubscriptions > 0 && isset($totalSavingsPerMonth) && $totalSavingsPerMonth > 0) { ?>
-                        <div>
-                            <dt><?= translate('monthly_savings', $i18n) ?></dt>
-                            <dd><?= CurrencyFormatter::format($totalSavingsPerMonth, $currencies[$userData['main_currency']]['code']) ?></dd>
-                        </div>
-                    <?php } ?>
-                </dl>
+                        <?php
+                    }
+                }
+                ?>
             </div>
-            <?php } ?>
-        </aside>
+        </div>
     </div>
 
         <?php if (!empty($aiRecommendations)) { ?>

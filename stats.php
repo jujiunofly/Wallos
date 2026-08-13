@@ -18,9 +18,7 @@ require_once 'includes/stats_calculations.php';
 require_once 'includes/stats_extra_calculations.php';
 
 ?>
-<section class="contain has-page-nav">
-  <nav class="page-nav" data-nav="auto" aria-label="<?= translate('on_this_page', $i18n) ?>"></nav>
-  <div class="page-nav-main">
+<section class="contain stats-page">
   <?php
   if ($showCantConverErrorMessage) {
     ?>
@@ -40,6 +38,7 @@ require_once 'includes/stats_extra_calculations.php';
     <div class="filtermenu">
       <button class="button secondary-button" id="filtermenu-button" title="<?= translate("filter", $i18n) ?>">
         <i class="fa-solid fa-filter"></i>
+        <span class="filter-badge is-hidden" id="filter-badge">0</span>
       </button>
       <div class="filtermenu-content">
         <?php
@@ -226,43 +225,30 @@ require_once 'includes/stats_extra_calculations.php';
         <span><?= CurrencyFormatter::format($averageSubscriptionCost, $code) ?></span>
         <div class="title"><?= translate('average_monthly', $i18n) ?></div>
       </div>
-      <div class="statistic short">
-        <span><?= CurrencyFormatter::format($mostExpensiveSubscription['price'], $code) ?></span>
-        <div class="title"><?= translate('most_expensive', $i18n) ?></div>
-        <?php
-        if (isset($mostExpensiveSubscription['logo']) && $mostExpensiveSubscription['logo'] != '') {
-          $mostExpensiveLogoSrc = "images/uploads/logos/" . $mostExpensiveSubscription['logo'];
-          $mostExpensiveLogoVariantSrc = !empty($mostExpensiveSubscription['logo_variant']) ? "images/uploads/logos/" . $mostExpensiveSubscription['logo_variant'] : null;
-          ?>
-          <div class="subtitle">
-            <?= renderThemedLogoImg($mostExpensiveLogoSrc, $mostExpensiveLogoVariantSrc, $mostExpensiveSubscription['logo_text_color'] ?? null, '', 'alt="' . $mostExpensiveSubscription['name'] . '" title="' . $mostExpensiveSubscription['name'] . '"') ?>
-          </div>
-          <?php
-        } else if (isset($mostExpensiveSubscription['name']) && $mostExpensiveSubscription['name'] != '') {
-          ?>
-          <div class="subtitle"><?= $mostExpensiveSubscription['name'] ?></div>
-          <?php
-        }
-        ?>
+      <div class="statistic">
+        <span><?= CurrencyFormatter::format($amountDueThisMonth, $code) ?></span>
+        <div class="title"><?= translate('amount_due', $i18n) ?></div>
       </div>
       <?php
       if ($cheapestSubscription !== null) {
         ?>
-        <div class="statistic short">
-          <span><?= CurrencyFormatter::format($cheapestSubscription['price'], $code) ?></span>
-          <div class="title"><?= translate('cheapest_subscription', $i18n) ?></div>
+        <div class="statistic statistic-with-logo">
+          <div class="statistic-copy">
+            <span><?= CurrencyFormatter::format($cheapestSubscription['price'], $code) ?></span>
+            <div class="title"><?= translate('cheapest_subscription', $i18n) ?></div>
+          </div>
           <?php
           if (!empty($cheapestSubscription['logo'])) {
             $cheapestLogoSrc = "images/uploads/logos/" . $cheapestSubscription['logo'];
             $cheapestLogoVariantSrc = !empty($cheapestSubscription['logo_variant']) ? "images/uploads/logos/" . $cheapestSubscription['logo_variant'] : null;
             ?>
-            <div class="subtitle">
+            <div class="statistic-logo">
               <?= renderThemedLogoImg($cheapestLogoSrc, $cheapestLogoVariantSrc, $cheapestSubscription['logo_text_color'] ?? null, '', 'alt="' . $cheapestSubscription['name'] . '" title="' . $cheapestSubscription['name'] . '"') ?>
             </div>
             <?php
           } else if (!empty($cheapestSubscription['name'])) {
             ?>
-            <div class="subtitle"><?= $cheapestSubscription['name'] ?></div>
+            <div class="statistic-logo statistic-logo-name" title="<?= htmlspecialchars($cheapestSubscription['name']) ?>"><?= htmlspecialchars($cheapestSubscription['name']) ?></div>
             <?php
           }
           ?>
@@ -270,9 +256,26 @@ require_once 'includes/stats_extra_calculations.php';
         <?php
       }
       ?>
-      <div class="statistic">
-        <span><?= CurrencyFormatter::format($amountDueThisMonth, $code) ?></span>
-        <div class="title"><?= translate('amount_due', $i18n) ?></div>
+      <div class="statistic statistic-with-logo">
+        <div class="statistic-copy">
+          <span><?= CurrencyFormatter::format($mostExpensiveSubscription['price'], $code) ?></span>
+          <div class="title"><?= translate('most_expensive', $i18n) ?></div>
+        </div>
+        <?php
+        if (isset($mostExpensiveSubscription['logo']) && $mostExpensiveSubscription['logo'] != '') {
+          $mostExpensiveLogoSrc = "images/uploads/logos/" . $mostExpensiveSubscription['logo'];
+          $mostExpensiveLogoVariantSrc = !empty($mostExpensiveSubscription['logo_variant']) ? "images/uploads/logos/" . $mostExpensiveSubscription['logo_variant'] : null;
+          ?>
+          <div class="statistic-logo">
+            <?= renderThemedLogoImg($mostExpensiveLogoSrc, $mostExpensiveLogoVariantSrc, $mostExpensiveSubscription['logo_text_color'] ?? null, '', 'alt="' . $mostExpensiveSubscription['name'] . '" title="' . $mostExpensiveSubscription['name'] . '"') ?>
+          </div>
+          <?php
+        } else if (isset($mostExpensiveSubscription['name']) && $mostExpensiveSubscription['name'] != '') {
+          ?>
+          <div class="statistic-logo statistic-logo-name" title="<?= htmlspecialchars($mostExpensiveSubscription['name']) ?>"><?= htmlspecialchars($mostExpensiveSubscription['name']) ?></div>
+          <?php
+        }
+        ?>
       </div>
       <?php
       if ($manualRenewalsCount > 0) {
@@ -649,7 +652,6 @@ require_once 'includes/stats_extra_calculations.php';
   }
   ?>
 
-  </div>
 </section>
 <?php
 if ($showAnyGraph) {

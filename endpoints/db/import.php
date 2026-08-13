@@ -1,5 +1,6 @@
 <?php
 require_once '../../includes/connect_endpoint.php';
+require_once '../../includes/backup_archive.php';
 
 $result = $db->query("SELECT COUNT(*) as count FROM user");
 $row = $result->fetchArray(SQLITE3_NUM);
@@ -72,36 +73,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     ]));
                 }
 
-                if (file_exists('../../.tmp/restore/logos/')) {
-                    $dir = '../../images/uploads/logos/';
-                    $di = new RecursiveDirectoryIterator($dir, FilesystemIterator::SKIP_DOTS);
-                    $ri = new RecursiveIteratorIterator($di, RecursiveIteratorIterator::CHILD_FIRST);
-
-                    foreach ($ri as $file) {
-                        if ($file->isDir()) {
-                            rmdir($file->getPathname());
-                        } else {
-                            unlink($file->getPathname());
-                        }
-                    }
-
-                    $dir = new RecursiveDirectoryIterator('../../.tmp/restore/logos/');
-                    $ite = new RecursiveIteratorIterator($dir);
-                    $allowedExtensions = ['png', 'jpg', 'jpeg', 'gif', 'webp'];
-
-                    foreach ($ite as $filePath) {
-                        if (in_array(pathinfo($filePath, PATHINFO_EXTENSION), $allowedExtensions)) {
-                            $destination = str_replace('../../.tmp/restore/', '../../images/uploads/', $filePath);
-                            $destinationDir = pathinfo($destination, PATHINFO_DIRNAME);
-
-                            if (!is_dir($destinationDir)) {
-                                mkdir($destinationDir, 0755, true);
-                            }
-
-                            copy($filePath, $destination);
-                        }
-                    }
-                }
+                wallos_restore_uploaded_media('../../.tmp/restore/', '../../images/uploads/');
 
                 emptyRestoreFolder();
 

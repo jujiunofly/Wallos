@@ -33,10 +33,9 @@ if (isset($settings['update_theme_setttings'])) {
   $updateThemeSettings = $settings['update_theme_setttings'];
 }
 
-$colorTheme = "blue";
-if (isset($settings['color_theme'])) {
-  $colorTheme = $settings['color_theme'];
-}
+$colorThemeLight = wallos_sanitize_color_theme($settings['color_theme'] ?? 'blue');
+$colorThemeDark = wallos_sanitize_color_theme($settings['color_theme_dark'] ?? '', $colorThemeLight);
+$colorTheme = ($theme === 'dark') ? $colorThemeDark : $colorThemeLight;
 
 $customCss = "";
 if (isset($settings['customCss'])) {
@@ -89,10 +88,16 @@ if ($bgMobileLight === '') {
 if ($bgMobileDark === '') {
     $bgMobileDark = $bgDesktopDark;
 }
-$hasPageBg = $bgDesktopLight !== '' || $bgDesktopDark !== '' || $bgMobileLight !== '' || $bgMobileDark !== '';
+$isDarkTheme = $theme === 'dark';
+$activePageBg = $isDarkTheme
+    ? ($bgDesktopDark !== '' ? $bgDesktopDark : $bgMobileDark)
+    : ($bgDesktopLight !== '' ? $bgDesktopLight : $bgMobileLight);
+$hasPageBg = $activePageBg !== '';
+$showAppSidebar = !isset($_COOKIE['wallos_sidebar']) || $_COOKIE['wallos_sidebar'] !== '0';
 $appearanceClasses = trim(
     ($appearance['glass_enabled'] ? 'glass-enabled' : '') . ' ' .
-    ($hasPageBg ? 'has-page-bg' : '')
+    ($hasPageBg ? 'has-page-bg' : '') . ' ' .
+    ($showAppSidebar ? 'has-app-sidebar' : '')
 );
 $darkThemeMode = isset($settings['dark_theme']) ? (int) $settings['dark_theme'] : 2;
 
@@ -102,12 +107,24 @@ $darkThemeMode = isset($settings['dark_theme']) ? (int) $settings['dark_theme'] 
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Wallos - Subscription Tracker</title>
-  <meta name="apple-mobile-web-app-title" content="Wallos">
+  <title><?= $appearance['header_title'] !== '' ? htmlspecialchars($appearance['header_title']) : 'Wallos - Subscription Tracker' ?></title>
+  <meta name="apple-mobile-web-app-title" content="<?= $appearance['header_title'] !== '' ? htmlspecialchars($appearance['header_title']) : 'Wallos' ?>">
   <meta name="theme-color" content="<?= $theme == "light" ? "#FFFFFF" : "#12151C" ?>" id="theme-color" />
   <meta name="referrer" content="no-referrer">
-  <link rel="icon" type="image/png" href="images/icon/favicon.ico" sizes="16x16">
-  <link rel="apple-touch-icon" href="images/icon/apple-touch-icon.png">
+  <?php
+  $faviconUrl = wallos_app_favicon_url($appearance['app_favicon'] ?? '');
+  if ($faviconUrl !== '') {
+      ?>
+      <link rel="icon" href="<?= htmlspecialchars($faviconUrl, ENT_QUOTES, 'UTF-8') ?>" id="appFavicon">
+      <link rel="apple-touch-icon" href="<?= htmlspecialchars($faviconUrl, ENT_QUOTES, 'UTF-8') ?>">
+      <?php
+  } else {
+      ?>
+      <link rel="icon" type="image/png" href="images/icon/favicon.ico" sizes="16x16" id="appFavicon">
+      <link rel="apple-touch-icon" href="images/icon/apple-touch-icon.png">
+      <?php
+  }
+  ?>
   <link rel="apple-touch-icon" sizes="152x152" href="images/icon/apple-touch-icon-152.png">
   <link rel="apple-touch-icon" sizes="180x180" href="images/icon/apple-touch-icon-180.png">
   <link rel="manifest" href="manifest.json" crossorigin="use-credentials">
@@ -118,6 +135,7 @@ $darkThemeMode = isset($settings['dark_theme']) ? (int) $settings['dark_theme'] 
   <link rel="stylesheet" href="styles/themes/green.css?<?= $version ?>" id="green-theme" <?= $colorTheme != "green" ? "disabled" : "" ?>>
   <link rel="stylesheet" href="styles/themes/yellow.css?<?= $version ?>" id="yellow-theme" <?= $colorTheme != "yellow" ? "disabled" : "" ?>>
   <link rel="stylesheet" href="styles/themes/purple.css?<?= $version ?>" id="purple-theme" <?= $colorTheme != "purple" ? "disabled" : "" ?>>
+  <link rel="stylesheet" href="styles/themes/pink.css?<?= $version ?>" id="pink-theme" <?= $colorTheme != "pink" ? "disabled" : "" ?>>
   <link rel="stylesheet" href="styles/barlow.css">
   <link rel="stylesheet" href="styles/font-awesome.min.css">
   <link rel="stylesheet" href="styles/brands.css">
@@ -133,6 +151,7 @@ $darkThemeMode = isset($settings['dark_theme']) ? (int) $settings['dark_theme'] 
     window.mobileNavigation = "<?= $settings['mobileNavigation'] == "true" ?>";
     window.csrfToken = "<?= htmlspecialchars(generate_csrf_token()) ?>";
     window.darkThemeMode = <?= $darkThemeMode ?>;
+    window.pageNavTitle = <?= json_encode(translate('contents', $i18n), JSON_UNESCAPED_UNICODE) ?>;
     window.themeLabels = {
       0: <?= json_encode(translate('light_theme', $i18n), JSON_UNESCAPED_UNICODE) ?>,
       1: <?= json_encode(translate('dark_theme', $i18n), JSON_UNESCAPED_UNICODE) ?>,
@@ -142,6 +161,14 @@ $darkThemeMode = isset($settings['dark_theme']) ? (int) $settings['dark_theme'] 
         'glass_enabled' => (int) $appearance['glass_enabled'],
         'glass_blur' => (int) $appearance['glass_blur'],
         'glass_opacity' => (int) $appearance['glass_opacity'],
+        'app_logo' => $appearance['app_logo'] ?? '',
+        'app_logo_url' => wallos_app_logo_url($appearance['app_logo'] ?? ''),
+        'app_favicon' => $appearance['app_favicon'] ?? '',
+        'app_favicon_url' => wallos_app_favicon_url($appearance['app_favicon'] ?? ''),
+        'header_title' => $appearance['header_title'] ?? '',
+        'header_title_size' => (int) ($appearance['header_title_size'] ?? 18),
+        'color_theme_light' => $colorThemeLight,
+        'color_theme_dark' => $colorThemeDark,
         'backgrounds' => [
             'bg_desktop_light' => ['raw' => $appearance['bg_desktop_light'], 'css' => $bgDesktopLight],
             'bg_desktop_dark' => ['raw' => $appearance['bg_desktop_dark'], 'css' => $bgDesktopDark],
@@ -149,7 +176,11 @@ $darkThemeMode = isset($settings['dark_theme']) ? (int) $settings['dark_theme'] 
             'bg_mobile_dark' => ['raw' => $appearance['bg_mobile_dark'], 'css' => $bgMobileDark],
         ],
         'presets' => array_map(function ($preset) {
-            return ['css' => $preset['css'], 'css_dark' => $preset['css_dark']];
+            return [
+                'css' => $preset['css'],
+                'css_dark' => $preset['css_dark'],
+                'theme' => $preset['theme'] ?? '',
+            ];
         }, wallos_background_presets()),
     ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?>;
   </script>
@@ -158,10 +189,14 @@ $darkThemeMode = isset($settings['dark_theme']) ? (int) $settings['dark_theme'] 
     :root {
       --glass-blur: <?= (int) $appearance['glass_blur'] ?>px;
       --glass-alpha: <?= number_format($appearance['glass_opacity'] / 100, 2, '.', '') ?>;
+      --page-bg: <?= $activePageBg !== '' ? $activePageBg : 'none' ?>;
       --page-bg-desktop-light: <?= $bgDesktopLight !== '' ? $bgDesktopLight : 'none' ?>;
       --page-bg-desktop-dark: <?= $bgDesktopDark !== '' ? $bgDesktopDark : 'none' ?>;
       --page-bg-mobile-light: <?= $bgMobileLight !== '' ? $bgMobileLight : 'none' ?>;
       --page-bg-mobile-dark: <?= $bgMobileDark !== '' ? $bgMobileDark : 'none' ?>;
+      --app-sidebar-width: 0px;
+      --app-header-height: 64px;
+      --header-title-size: <?= (int) ($appearance['header_title_size'] ?? 18) ?>px;
     }
     <?= htmlspecialchars($customCss, ENT_QUOTES, 'UTF-8') ?>
   </style>
@@ -213,19 +248,39 @@ $darkThemeMode = isset($settings['dark_theme']) ? (int) $settings['dark_theme'] 
 </head>
 
 <body class="<?= $theme ?> <?= $languages[$lang]['dir'] ?> <?= $mobileNavigation ?> <?= $appearanceClasses ?>">
+  <div id="page-bg-layer" class="page-bg-layer" aria-hidden="true"<?php if ($activePageBg !== ''): ?> style="background-image: <?= htmlspecialchars($activePageBg, ENT_QUOTES, 'UTF-8') ?>"<?php endif; ?>></div>
   <header>
     <div class="contain">
-      <div class="logo">
-        <a href=".">
-          <div class="logo-image" title="Wallos - Subscription Tracker">
-            <?php include "images/siteicons/svg/logo.php"; ?>
-          </div>
-        </a>
+      <div class="header-left">
+        <div class="logo header-logo">
+          <a href=".">
+            <div class="logo-image app-logo-slot" title="Wallos - Subscription Tracker">
+              <?php wallos_render_app_logo($appearance['app_logo'] ?? ''); ?>
+            </div>
+          </a>
+        </div>
+        <div class="header-title<?= ($appearance['header_title'] ?? '') === '' ? ' is-hidden' : '' ?>" id="headerTitleText"><?= htmlspecialchars($appearance['header_title'] ?? '') ?></div>
       </div>
       <nav class="header-nav">
         <button type="button" class="header-theme-toggle" id="headerThemeToggle"
           title="<?= translate('theme', $i18n) ?>" aria-label="<?= translate('theme', $i18n) ?>">
           <i class="fa-solid <?= $darkThemeMode === 1 ? 'fa-moon' : ($darkThemeMode === 0 ? 'fa-sun' : 'fa-circle-half-stroke') ?>"></i>
+        </button>
+        <div class="header-timezone">
+          <button type="button" class="header-theme-toggle" id="headerTimezoneToggle"
+            title="<?= translate('timezone', $i18n) ?>" aria-label="<?= translate('timezone', $i18n) ?>">
+            <i class="fa-solid fa-earth-asia"></i>
+          </button>
+          <div class="header-timezone-panel" id="headerTimezonePanel">
+            <label for="headerTimezone"><?= translate('timezone', $i18n) ?></label>
+            <select id="headerTimezone">
+              <?= wallos_timezone_options_html($appearance['timezone'] ?? '', $i18n) ?>
+            </select>
+          </div>
+        </div>
+        <button type="button" class="header-theme-toggle header-sidebar-toggle" id="headerSidebarToggle"
+          title="<?= translate('toggle_sidebar', $i18n) ?>" aria-label="<?= translate('toggle_sidebar', $i18n) ?>">
+          <i class="fa-solid <?= $showAppSidebar ? 'fa-table-columns' : 'fa-bars' ?>"></i>
         </button>
         <div class="dropdown">
           <button class="dropbtn" onClick="toggleDropdown()">
@@ -233,19 +288,19 @@ $darkThemeMode = isset($settings['dark_theme']) ? (int) $settings['dark_theme'] 
             <span id="user" class="mobileNavigationHideOnMobile"><?= $userData['username'] ?></span>
           </button>
           <div class="dropdown-content">
-            <a href="." class="mobileNavigationHideOnMobile">
+            <a href="." class="mobileNavigationHideOnMobile app-nav-in-dropdown">
               <?php include "images/siteicons/svg/mobile-menu/home.php"; ?>
               <?= translate('dashboard', $i18n) ?></a>
-            <a href="subscriptions.php" class="mobileNavigationHideOnMobile">
+            <a href="subscriptions.php" class="mobileNavigationHideOnMobile app-nav-in-dropdown">
               <?php include "images/siteicons/svg/mobile-menu/subscriptions.php"; ?>
               <?= translate('subscriptions', $i18n) ?></a>  
-            <a href="calendar.php" class="mobileNavigationHideOnMobile">
+            <a href="calendar.php" class="mobileNavigationHideOnMobile app-nav-in-dropdown">
                 <?php include "images/siteicons/svg/mobile-menu/calendar.php"; ?>
                 <?= translate('calendar', $i18n) ?></a>
-            <a href="stats.php" class="mobileNavigationHideOnMobile">
+            <a href="stats.php" class="mobileNavigationHideOnMobile app-nav-in-dropdown">
               <?php include "images/siteicons/svg/mobile-menu/statistics.php"; ?>
               <?= translate('stats', $i18n) ?></a>
-            <a href="settings.php" class="mobileNavigationHideOnMobile">
+            <a href="settings.php" class="mobileNavigationHideOnMobile app-nav-in-dropdown">
               <?php include "images/siteicons/svg/mobile-menu/settings.php"; ?>
               <?= translate('settings', $i18n) ?></a>
             <a href="profile.php">
@@ -286,6 +341,36 @@ $darkThemeMode = isset($settings['dark_theme']) ? (int) $settings['dark_theme'] 
   $settingsClass = $page === 'settings.php' ? 'active' : '';
   $profileClass = $page === 'profile.php' ? 'active' : '';
   ?>
+
+  <aside class="app-sidebar" aria-label="<?= translate('dashboard', $i18n) ?>">
+    <a href="." class="app-sidebar-brand" title="Wallos">
+      <span class="app-sidebar-logo app-logo-slot">
+        <?php wallos_render_app_logo($appearance['app_logo'] ?? ''); ?>
+      </span>
+    </a>
+    <nav class="app-sidebar-nav">
+    <a href="." class="app-sidebar-link <?= $dashboardClass ?>" title="<?= translate('dashboard', $i18n) ?>">
+      <span class="app-sidebar-icon"><?php include "images/siteicons/svg/mobile-menu/home.php"; ?></span>
+      <span class="app-sidebar-label"><?= translate('dashboard', $i18n) ?></span>
+    </a>
+    <a href="subscriptions.php" class="app-sidebar-link <?= $subscriptionsClass ?>" title="<?= translate('subscriptions', $i18n) ?>">
+      <span class="app-sidebar-icon"><?php include "images/siteicons/svg/mobile-menu/subscriptions.php"; ?></span>
+      <span class="app-sidebar-label"><?= translate('subscriptions', $i18n) ?></span>
+    </a>
+    <a href="calendar.php" class="app-sidebar-link <?= $calendarClass ?>" title="<?= translate('calendar', $i18n) ?>">
+      <span class="app-sidebar-icon"><?php include "images/siteicons/svg/mobile-menu/calendar.php"; ?></span>
+      <span class="app-sidebar-label"><?= translate('calendar', $i18n) ?></span>
+    </a>
+    <a href="stats.php" class="app-sidebar-link <?= $statsClass ?>" title="<?= translate('stats', $i18n) ?>">
+      <span class="app-sidebar-icon"><?php include "images/siteicons/svg/mobile-menu/statistics.php"; ?></span>
+      <span class="app-sidebar-label"><?= translate('stats', $i18n) ?></span>
+    </a>
+    <a href="settings.php" class="app-sidebar-link <?= $settingsClass ?>" title="<?= translate('settings', $i18n) ?>">
+      <span class="app-sidebar-icon"><?php include "images/siteicons/svg/mobile-menu/settings.php"; ?></span>
+      <span class="app-sidebar-label"><?= translate('settings', $i18n) ?></span>
+    </a>
+    </nav>
+  </aside>
 
   <?php
   if ($settings['mobile_nav'] == 1) {

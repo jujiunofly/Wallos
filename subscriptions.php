@@ -179,6 +179,7 @@ $subscriptionsView = (isset($_COOKIE['subscriptionsView']) && $_COOKIE['subscrip
       <div class="filtermenu on-dashboard">
         <button class="button secondary-button" id="filtermenu-button" title="<?= translate("filter", $i18n) ?>">
           <i class="fa-solid fa-filter"></i>
+          <span class="filter-badge is-hidden" id="filter-badge">0</span>
         </button>
         <?php include 'includes/filters_menu.php'; ?>
       </div>
@@ -244,6 +245,7 @@ $subscriptionsView = (isset($_COOKIE['subscriptionsView']) && $_COOKIE['subscrip
       $print[$id]['payer_user_id'] = $subscription['payer_user_id'];
       $print[$id]['price'] = floatval($subscription['price']);
       $print[$id]['progress'] = getSubscriptionProgress($cycle, $frequency, $subscription['next_payment'], $subscription['start_date'] ?? null);
+      $print[$id]['days_left'] = getSubscriptionRemainingDays($subscription['next_payment']);
       $print[$id]['inactive'] = $subscription['inactive'];
       $print[$id]['url'] = $subscription['url'];
       $print[$id]['notes'] = $subscription['notes'];
@@ -521,13 +523,6 @@ $subscriptionsView = (isset($_COOKIE['subscriptionsView']) && $_COOKIE['subscrip
       <input type="text" id="notes" name="notes" autocomplete="off" placeholder="<?= translate('notes', $i18n) ?>">
     </div>
 
-    <div class="form-group">
-      <div class="inline grow">
-        <input type="checkbox" id="inactive" name="inactive" onchange="toggleReplacementSub()">
-        <label for="inactive" class="grow"><?= translate('inactive', $i18n) ?></label>
-      </div>
-    </div>
-
     <?php
     $orderedSubscriptions = $subscriptions;
     usort($orderedSubscriptions, function ($a, $b) {
@@ -552,12 +547,18 @@ $subscriptionsView = (isset($_COOKIE['subscriptionsView']) && $_COOKIE['subscrip
       </select>
     </div>
 
-    <div class="buttons">
-      <input type="button" value="<?= translate('delete', $i18n) ?>" class="warning-button left thin" id="deletesub"
-        style="display: none">
-      <input type="button" value="<?= translate('cancel', $i18n) ?>" class="secondary-button thin"
-        onClick="closeAddSubscription()">
-      <input type="submit" value="<?= translate('save', $i18n) ?>" class="thin" id="save-button">
+    <div class="subscription-form-footer">
+      <div class="inactive-toggle">
+        <input type="checkbox" id="inactive" name="inactive" onchange="toggleReplacementSub()">
+        <label for="inactive"><?= translate('inactive', $i18n) ?></label>
+      </div>
+      <div class="buttons">
+        <input type="button" value="<?= translate('delete', $i18n) ?>" class="warning-button left thin" id="deletesub"
+          style="display: none">
+        <input type="button" value="<?= translate('cancel', $i18n) ?>" class="secondary-button thin"
+          onClick="closeAddSubscription()">
+        <input type="submit" value="<?= translate('save', $i18n) ?>" class="thin" id="save-button">
+      </div>
     </div>
   </form>
 </section>

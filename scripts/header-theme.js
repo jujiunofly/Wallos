@@ -8,37 +8,65 @@ function headerThemeIcon(mode) {
   return 'fa-circle-half-stroke';
 }
 
-function currentAppearanceBackground() {
-  const config = window.appearanceConfig;
-  if (!config || !config.backgrounds) {
-    return '';
+function slotBackground(key) {
+  const item = window.appearanceConfig && window.appearanceConfig.backgrounds
+    ? window.appearanceConfig.backgrounds[key]
+    : null;
+  if (!item) {
+    return { raw: '', css: '' };
   }
+  return { raw: item.raw || '', css: item.css || '' };
+}
+
+function currentAppearanceBackground() {
   const dark = document.body.classList.contains('dark');
   const mobile = window.matchMedia('(max-width: 768px)').matches;
-  const preferred = (mobile ? 'bg_mobile_' : 'bg_desktop_') + (dark ? 'dark' : 'light');
-  const fallback = (mobile ? 'bg_mobile_' : 'bg_desktop_') + (dark ? 'light' : 'dark');
-  return (config.backgrounds[preferred] && config.backgrounds[preferred].css)
-    || (config.backgrounds[fallback] && config.backgrounds[fallback].css)
-    || '';
+  const theme = dark ? 'dark' : 'light';
+  const preferred = slotBackground((mobile ? 'bg_mobile_' : 'bg_desktop_') + theme);
+  if (preferred.css) {
+    return preferred.css;
+  }
+  if (mobile) {
+    return slotBackground('bg_desktop_' + theme).css || '';
+  }
+  return '';
 }
 
 function applyPageBackground() {
   const css = currentAppearanceBackground();
-  const root = document.documentElement;
-  const dark = document.body.classList.contains('dark');
-  const mobile = window.matchMedia('(max-width: 768px)').matches;
-  const varName = mobile
-    ? (dark ? '--page-bg-mobile-dark' : '--page-bg-mobile-light')
-    : (dark ? '--page-bg-desktop-dark' : '--page-bg-desktop-light');
-  if (css) {
-    root.style.setProperty(varName, css);
-    document.body.classList.add('has-page-bg');
-  } else {
-    root.style.setProperty(varName, 'none');
-    const stillHasBg = Object.values((window.appearanceConfig && window.appearanceConfig.backgrounds) || {})
-      .some((item) => item && item.css);
-    document.body.classList.toggle('has-page-bg', stillHasBg);
+  const layer = document.getElementById('page-bg-layer');
+  document.documentElement.style.setProperty('--page-bg', css || 'none');
+  document.body.classList.toggle('has-page-bg', !!css);
+  if (layer) {
+    layer.style.backgroundImage = css || 'none';
   }
+}
+
+function applyColorThemeStylesheet(themeColor) {
+  const next = themeColor || 'blue';
+  const previous = window.colorTheme || 'blue';
+  ['red', 'green', 'yellow', 'purple', 'pink'].forEach((id) => {
+    const el = document.getElementById(id + '-theme');
+    if (el) {
+      el.disabled = next !== id;
+    }
+  });
+  if (previous && previous !== next) {
+    document.querySelectorAll('img').forEach((img) => {
+      if (img.src.includes('siteicons/' + previous)) {
+        img.src = img.src.replace(previous, next);
+      }
+    });
+  }
+  window.colorTheme = next;
+  document.cookie = 'colorTheme=' + next + '; expires=Fri, 31 Dec 9999 23:59:59 GMT; SameSite=Lax';
+}
+
+function colorThemeForMode(mode) {
+  const cfg = window.appearanceConfig || {};
+  const light = cfg.color_theme_light || window.colorTheme || 'blue';
+  const dark = cfg.color_theme_dark || light;
+  return mode === 'dark' ? dark : light;
 }
 
 function applyResolvedTheme(mode) {
@@ -54,6 +82,7 @@ function applyResolvedTheme(mode) {
   }
   document.body.classList.remove('light', 'dark');
   document.body.classList.add(inUse);
+  applyColorThemeStylesheet(colorThemeForMode(inUse));
 
   document.cookie = 'theme=' + themeName + '; expires=Fri, 31 Dec 9999 23:59:59 GMT; SameSite=Lax';
   if (mode === 2) {
@@ -112,9 +141,91 @@ function cycleHeaderTheme() {
   saveThemeMode(next);
 }
 
+function saveTimezone(value) {
+  const headerSelect = document.getElementById('headerTimezone');
+  const settingsSelect = document.getElementById('userTimezone');
+  if (headerSelect && headerSelect.value !== value) {
+    headerSelect.value = value;
+  }
+  if (settingsSelect && settingsSelect.value !== value) {
+    settingsSelect.value = value;
+  }
+
+  fetch('endpoints/settings/timezone.php', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'X-CSRF-Token': window.csrfToken,
+    },
+    body: 'timezone=' + encodeURIComponent(value || ''),
+  })
+    .then((response) => response.json())
+    .then((data) => {
+      if (data.success) {
+        if (typeof showSuccessMessage === 'function') {
+          showSuccessMessage(data.message);
+        }
+        window.setTimeout(() => window.location.reload(), 250);
+      } else if (typeof showErrorMessage === 'function') {
+        showErrorMessage(data.message);
+      }
+    })
+    .catch(() => {
+      if (typeof showErrorMessage === 'function') {
+        showErrorMessage(typeof translate === 'function' ? translate('unknown_error') : '');
+      }
+    });
+}
+
+function setSidebarVisible(on) {
+  document.body.classList.toggle('has-app-sidebar', !!on);
+  document.cookie = 'wallos_sidebar=' + (on ? '1' : '0') + '; expires=Fri, 31 Dec 9999 23:59:59 GMT; SameSite=Lax';
+  const toggle = document.getElementById('headerSidebarToggle');
+  if (toggle) {
+    const icon = toggle.querySelector('i');
+    if (icon) {
+      icon.className = 'fa-solid ' + (on ? 'fa-table-columns' : 'fa-bars');
+    }
+    toggle.setAttribute('aria-pressed', on ? 'true' : 'false');
+  }
+  if (typeof pinPageNav === 'function') {
+    window.setTimeout(pinPageNav, 50);
+  }
+}
+
 document.addEventListener('DOMContentLoaded', function () {
+  applyPageBackground();
+  if (window.matchMedia) {
+    window.matchMedia('(max-width: 768px)').addEventListener('change', applyPageBackground);
+  }
+  const sidebarToggle = document.getElementById('headerSidebarToggle');
+  if (sidebarToggle) {
+    sidebarToggle.addEventListener('click', () => {
+      setSidebarVisible(!document.body.classList.contains('has-app-sidebar'));
+    });
+  }
   const button = document.getElementById('headerThemeToggle');
   if (button) {
     button.addEventListener('click', cycleHeaderTheme);
+  }
+
+  const timezoneToggle = document.getElementById('headerTimezoneToggle');
+  const timezonePanel = document.getElementById('headerTimezonePanel');
+  const timezoneSelect = document.getElementById('headerTimezone');
+  if (timezoneToggle && timezonePanel) {
+    timezoneToggle.addEventListener('click', (event) => {
+      event.stopPropagation();
+      timezonePanel.classList.toggle('is-open');
+    });
+    document.addEventListener('click', (event) => {
+      if (!timezonePanel.contains(event.target) && !timezoneToggle.contains(event.target)) {
+        timezonePanel.classList.remove('is-open');
+      }
+    });
+  }
+  if (timezoneSelect) {
+    timezoneSelect.addEventListener('change', () => {
+      saveTimezone(timezoneSelect.value);
+    });
   }
 });

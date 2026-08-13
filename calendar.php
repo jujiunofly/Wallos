@@ -268,6 +268,20 @@ if ($weekStartsSunday) {
     ?>
 
     <div class="calendar">
+      <div class="calendar-summary">
+        <div class="calendar-summary-item">
+          <span><?= translate("active_subscriptions", $i18n) ?></span>
+          <strong><?= $numberOfSubscriptionsToPayThisMonth ?></strong>
+        </div>
+        <div class="calendar-summary-item">
+          <span><?= translate("total_cost", $i18n) ?></span>
+          <strong><?= CurrencyFormatter::format($totalCostThisMonth, $code) ?></strong>
+        </div>
+        <div class="calendar-summary-item">
+          <span><?= translate("amount_due", $i18n) ?></span>
+          <strong><?= CurrencyFormatter::format($amountDueThisMonth, $code) ?></strong>
+        </div>
+      </div>
       <div class="calendar-header">
         <?php foreach ($weekDays as $weekDay) { ?>
           <div class="calendar-cell"><?= translate($weekDay['key'], $i18n) ?></div>
@@ -323,28 +337,7 @@ if ($weekStartsSunday) {
           </div>
         <?php
       }
-    ?>    
-
-    <div class="calendar-monthly-stats">
-      <div class="calendar-monthly-stats-header">
-        <h3><?= translate("stats", $i18n) ?></h3>
-      </div>
-      <div class="statistics">
-        <div class="statistic">
-          <span>
-            <?= $numberOfSubscriptionsToPayThisMonth ?></span>
-          <div class="title"><?= translate("active_subscriptions", $i18n) ?></div>
-        </div>
-        <div class="statistic">
-          <span><?= CurrencyFormatter::format($totalCostThisMonth, $code) ?></span>
-          <div class="title"><?= translate("total_cost", $i18n) ?></div>
-        </div>
-        <div class="statistic">
-          <span><?= CurrencyFormatter::format($amountDueThisMonth, $code) ?></span>
-          <div class="title"><?= translate("amount_due", $i18n) ?></div>
-        </div>
-      </div>
-    </div>
+    ?>
 
 </section>
 

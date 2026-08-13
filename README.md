@@ -1,3 +1,70 @@
+# Wallos 个人版（本仓库）
+
+基于 [ellite/Wallos](https://github.com/ellite/Wallos) 的个人分支（[jujiunofly/Wallos](https://github.com/jujiunofly/Wallos)）。数据格式与官方兼容：订阅、用户、备份 zip 都能直接用；新字段都是给 `settings` 表加列并带默认值，官方备份还原后会自动跑迁移。
+
+下面是本版本的用法和新增功能。再往下是官方原版 README。
+
+## 本版本怎么用
+
+### Docker Compose（推荐）
+
+本仓库的 `docker-compose.yaml` 会**从源码构建**，不要直接用 `bellamy/wallos` 官方镜像，否则没有这些改动。
+
+```bash
+git clone https://github.com/jujiunofly/Wallos.git
+cd Wallos
+docker compose up -d --build
+```
+
+浏览器打开 `http://服务器IP:8282`。第一次使用需要注册账号。
+
+数据会写在仓库旁的 `data/` 目录，升级容器不会丢：
+
+| 宿主机 | 容器内 |
+| --- | --- |
+| `./data/db` | `/var/www/html/db`（SQLite） |
+| `./data/logos` | `/var/www/html/images/uploads/logos` |
+| `./data/backgrounds` | `/var/www/html/images/uploads/backgrounds` |
+| `./data/branding` | `/var/www/html/images/uploads/branding` |
+
+时区默认 `Asia/Shanghai`，可在 `docker-compose.yaml` 的 `TZ` 里改。
+
+更新：
+
+```bash
+git pull
+docker compose up -d --build
+```
+
+打开站点后会自动跑数据库迁移。也可以手动访问 `/endpoints/db/migrate.php`（需管理员登录）。
+
+备份：管理后台「备份与恢复」会打出 zip（数据库 + 全部上传文件，含 Logo / 背景 / 图标）。还原官方旧备份也可以，缺的新列会自动补上。
+
+### 不用 Docker
+
+和官方一样：PHP 8.3 + SQLite + 把 `db/wallos.empty.db` 复制为 `db/wallos.db`，把站点放到 Web 根目录。见下文官方安装说明。
+
+## 本版本新增 / 改动
+
+- **侧边栏导航**：电脑 / 平板可在头像旁开关侧栏
+- **浅色 / 深色独立主题色**，并增加粉色
+- **页面背景**：桌面 / 手机 × 浅色 / 深色可分别设预设、纯色或图片；图片选择器类似头像，默认收起
+- **磨砂玻璃**：可开关，并调节模糊和不透明度；编辑订阅弹层使用固定磨砂，不跟滑条走
+- **品牌**：自定义应用 Logo、Favicon、页眉标题和字号（手机隐藏标题）
+- **订阅进度**：横条或圆环（手机圆环会缩小）；列表视图开磨砂时卡片也半透明
+- **时区**：可按用户设置
+- **首页**：30 天内即将到期；不超过 6 条单列，超过 6 条电脑端两列（先竖后横）
+- **统计 / 日历 / 订阅弹窗**：布局和对比度调整
+- **手机**：左划快捷操作色块只在左划时出现，平时不透出卡片
+
+## 新老版本兼容
+
+- **从官方 Wallos 升级到本仓库**：保留原来的 `db/` 和 `images/uploads/`，替换代码后跑迁移即可。旧数据原样可用，新外观选项都是默认值。
+- **从本仓库换回官方**：多出来的 `settings` 列官方不会读，一般不影响使用。背景 / 品牌文件可以留着。
+- **备份**：zip 里仍是 `wallos.db` + 上传目录。旧备份只有 logos 也能还原；新备份还会带上 backgrounds 和 branding。
+
+---
+
 <div align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="./images/siteicons/walloswhite.png">

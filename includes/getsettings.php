@@ -1,5 +1,10 @@
 <?php
 
+require_once __DIR__ . '/appearance.php';
+if (isset($db)) {
+    wallos_ensure_appearance_schema($db);
+}
+
 $query = "SELECT * FROM settings WHERE user_id = :userId";
 $stmt = $db->prepare($query);
 $stmt->bindValue(':userId', $userId, SQLITE3_INTEGER);
@@ -20,7 +25,8 @@ if ($settings !== false) {
     if ($themeValue == "automatic") {
         $settings['update_theme_setttings'] = true;
     }
-    $settings['color_theme'] = $settings['color_theme'] ? $settings['color_theme'] : "blue";
+    $settings['color_theme'] = wallos_sanitize_color_theme($settings['color_theme'] ?? 'blue');
+    $settings['color_theme_dark'] = wallos_sanitize_color_theme($settings['color_theme_dark'] ?? '', $settings['color_theme']);
     $settings['showMonthlyPrice'] = $settings['monthly_price'] ? 'true': 'false';
     $settings['convertCurrency'] = $settings['convert_currency'] ? 'true': 'false';
     $settings['removeBackground'] = $settings['remove_background'] ? 'true': 'false';
@@ -29,6 +35,7 @@ if ($settings !== false) {
     $settings['showOriginalPrice'] = $settings['show_original_price'] ? 'true': 'false';
     $settings['mobileNavigation'] = $settings['mobile_nav'] ? 'true': 'false';
     $settings['showSubscriptionProgress'] = $settings['show_subscription_progress'] ? 'true': 'false';
+    $settings['subscription_progress_style'] = (($settings['subscription_progress_style'] ?? 'bar') === 'ring') ? 'ring' : 'bar';
     $settings['week_starts_sunday'] = isset($settings['week_starts_sunday']) ? $settings['week_starts_sunday'] : 0;
     $settings['timezone'] = $settings['timezone'] ?? '';
     $settings['glass_enabled'] = isset($settings['glass_enabled']) ? (int) $settings['glass_enabled'] : 0;
@@ -38,8 +45,11 @@ if ($settings !== false) {
     $settings['bg_desktop_dark'] = $settings['bg_desktop_dark'] ?? '';
     $settings['bg_mobile_light'] = $settings['bg_mobile_light'] ?? '';
     $settings['bg_mobile_dark'] = $settings['bg_mobile_dark'] ?? '';
+    $settings['app_logo'] = $settings['app_logo'] ?? '';
+    $settings['app_favicon'] = $settings['app_favicon'] ?? '';
+    $settings['header_title'] = $settings['header_title'] ?? '';
+    $settings['header_title_size'] = isset($settings['header_title_size']) ? (int) $settings['header_title_size'] : 18;
 
-    require_once __DIR__ . '/appearance.php';
     wallos_apply_user_timezone($settings['timezone']);
 }
 

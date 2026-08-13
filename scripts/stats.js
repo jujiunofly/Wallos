@@ -34,7 +34,7 @@ function loadGraph(container, dataPoints, currency, run) {
     const chart = new ApexCharts(el, {
         chart: {
             type: 'donut',
-            height: 320,
+            height: window.matchMedia('(max-width: 768px)').matches ? 150 : 180,
             background: 'transparent',
             fontFamily: t.font,
         },
@@ -95,7 +95,7 @@ function loadLineGraph(container, dataPoints, currency, run) {
     const chart = new ApexCharts(document.getElementById(container), {
         chart: {
             type: 'area',
-            height: 370,
+            height: window.matchMedia('(max-width: 768px)').matches ? 160 : 200,
             background: 'transparent',
             fontFamily: t.font,
             toolbar: { show: false },
@@ -162,7 +162,7 @@ function loadBarGraph(container, dataPoints, currency, run, thresholdLine) {
     const chart = new ApexCharts(document.getElementById(container), {
         chart: {
             type: 'bar',
-            height: 320,
+            height: window.matchMedia('(max-width: 768px)').matches ? 150 : 180,
             background: 'transparent',
             fontFamily: t.font,
             toolbar: { show: false },
@@ -204,45 +204,68 @@ function loadHorizontalBarGraph(container, dataPoints, currency, run) {
     if (!run) return;
 
     const t = _chartTheme();
+    const mobile = window.matchMedia('(max-width: 768px)').matches;
     const fmt = val => currency
-        ? new Intl.NumberFormat(navigator.language, { style: 'currency', currency }).format(val)
+        ? new Intl.NumberFormat(navigator.language, { style: 'currency', currency, maximumFractionDigits: mobile ? 0 : 2 }).format(val)
         : new Intl.NumberFormat(navigator.language).format(val);
 
     const chart = new ApexCharts(document.getElementById(container), {
         chart: {
             type: 'bar',
-            height: Math.max(200, dataPoints.length * 36 + 60),
+            height: Math.max(mobile ? 240 : 180, dataPoints.length * (mobile ? 38 : 28) + 56),
             background: 'transparent',
             fontFamily: t.font,
             toolbar: { show: false },
             zoom: { enabled: false },
+            parentHeightOffset: 0,
         },
         theme: { mode: t.dark ? 'dark' : 'light' },
         series: [{ name: currency || '', data: dataPoints.map(p => p.y) }],
         xaxis: {
             categories: dataPoints.map(p => p.label),
+            tickAmount: mobile ? 3 : 5,
             labels: {
+                show: !mobile,
                 formatter: fmt,
-                style: { fontFamily: t.font, colors: t.text },
+                hideOverlappingLabels: true,
+                rotate: 0,
+                style: { fontFamily: t.font, colors: t.text, fontSize: '12px' },
             },
         },
         yaxis: {
-            labels: { style: { fontFamily: t.font, colors: t.text } },
+            labels: {
+                maxWidth: mobile ? 86 : 140,
+                style: { fontFamily: t.font, colors: t.text, fontSize: mobile ? '11px' : '12px' },
+            },
         },
         colors: [t.main],
         plotOptions: {
             bar: {
                 horizontal: true,
-                barHeight: '55%',
+                barHeight: mobile ? '52%' : '55%',
                 borderRadius: 4,
                 borderRadiusApplication: 'end',
+                dataLabels: {
+                    position: 'top',
+                },
             },
         },
-        dataLabels: { enabled: false },
-        grid: { borderColor: t.border },
+        dataLabels: {
+            enabled: mobile,
+            formatter: fmt,
+            offsetX: 4,
+            style: { fontFamily: t.font, fontSize: '11px', colors: [t.text], fontWeight: 600 },
+            background: { enabled: false },
+        },
+        grid: {
+            borderColor: t.border,
+            padding: { left: mobile ? 0 : 8, right: mobile ? 36 : 4, bottom: 0 },
+        },
         tooltip: {
             style: { fontFamily: t.font },
-            y: { formatter: fmt },
+            y: { formatter: (val) => currency
+                ? new Intl.NumberFormat(navigator.language, { style: 'currency', currency }).format(val)
+                : new Intl.NumberFormat(navigator.language).format(val) },
         },
         legend: { show: false },
     });
@@ -261,6 +284,7 @@ function closeSubMenus() {
 }
 
 document.addEventListener("DOMContentLoaded", function() {
+    updateFilterBadge();
     var filtermenu = document.querySelector('#filtermenu-button');
     filtermenu.addEventListener('click', function() {
         this.parentElement.querySelector('.filtermenu-content').classList.toggle('is-open');
@@ -324,6 +348,16 @@ document.querySelectorAll('.filter-item').forEach(function(item) {
     window.location.href = newUrl;
   });
 });
+
+function updateFilterBadge() {
+  const badge = document.getElementById('filter-badge');
+  if (!badge) {
+    return;
+  }
+  const count = document.querySelectorAll('.filtermenu-content .filter-item.selected').length;
+  badge.textContent = String(count);
+  badge.classList.toggle('is-hidden', count === 0);
+}
 
 function clearFilters() {
     window.location.href = 'stats.php';

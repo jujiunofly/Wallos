@@ -199,7 +199,7 @@ if (isset($_POST['dark_theme'])) {
 
 if (isset($_POST['color_theme'])) {
     $colorTheme = $_POST['color_theme'];
-    $allowedThemes = ['blue', 'green', 'red', 'yellow', 'purple', 'custom'];
+    $allowedThemes = ['blue', 'green', 'red', 'yellow', 'purple', 'pink', 'custom'];
     if (in_array($colorTheme, $allowedThemes, true)) {
         $updateFields[] = "`color_theme` = :color_theme";
         $params['color_theme'] = [

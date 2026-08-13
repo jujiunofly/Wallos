@@ -2,22 +2,25 @@
 
 require_once '../../includes/connect_endpoint.php';
 require_once '../../includes/validate_endpoint.php';
+require_once '../../includes/appearance.php';
+
+wallos_ensure_appearance_schema($db);
 
 $postData = file_get_contents("php://input");
 $data = json_decode($postData, true);
 
-// Valiudate input, should be a color from the allowed list
-$allowedColors = ['blue', 'red', 'green', 'yellow', 'purple'];
-if (!isset($data['color']) || !in_array($data['color'], $allowedColors)) {
+$color = wallos_sanitize_color_theme($data['color'] ?? '', '');
+if ($color === '') {
     die(json_encode([
         "success" => false,
         "message" => translate("error", $i18n)
     ]));
 }
 
-$color = $data['color'];
+$mode = ($data['mode'] ?? '') === 'dark' ? 'dark' : 'light';
+$column = $mode === 'dark' ? 'color_theme_dark' : 'color_theme';
 
-$stmt = $db->prepare('UPDATE settings SET color_theme = :color WHERE user_id = :userId');
+$stmt = $db->prepare("UPDATE settings SET {$column} = :color WHERE user_id = :userId");
 $stmt->bindParam(':color', $color, SQLITE3_TEXT);
 $stmt->bindParam(':userId', $userId, SQLITE3_INTEGER);
 

@@ -104,6 +104,9 @@ document.addEventListener('DOMContentLoaded', function () {
     // Preserve existing classes on the body tag
     const existingClasses = document.body.className.split(' ').filter(cls => cls !== 'dark' && cls !== 'light');
     document.body.className = [...existingClasses, themePreference].join(' ');
+    if (typeof applyPageBackground === 'function') {
+      applyPageBackground();
+    }
 
     document.cookie = `inUseTheme=${themePreference}; expires=Fri, 31 Dec 9999 23:59:59 GMT; SameSite=Lax`;
     const themeColorMetaTag = document.querySelector('meta[name="theme-color"]');

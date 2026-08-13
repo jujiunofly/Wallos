@@ -85,3 +85,56 @@ function wallos_create_backup_archive()
         'numFiles' => $numFiles,
     ];
 }
+
+function wallos_restore_uploaded_media($restoreRoot, $uploadsRoot)
+{
+    $folders = ['logos', 'branding', 'backgrounds'];
+    $allowed = ['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg', 'ico'];
+    $restoreRoot = rtrim(str_replace('\\', '/', $restoreRoot), '/') . '/';
+    $uploadsRoot = rtrim(str_replace('\\', '/', $uploadsRoot), '/') . '/';
+
+    foreach ($folders as $folder) {
+        $source = $restoreRoot . $folder;
+        if (!is_dir($source)) {
+            continue;
+        }
+
+        $destinationRoot = $uploadsRoot . $folder;
+        if (!is_dir($destinationRoot)) {
+            mkdir($destinationRoot, 0755, true);
+        }
+
+        $existing = new RecursiveIteratorIterator(
+            new RecursiveDirectoryIterator($destinationRoot, FilesystemIterator::SKIP_DOTS),
+            RecursiveIteratorIterator::CHILD_FIRST
+        );
+        foreach ($existing as $file) {
+            if ($file->getFilename() === '.gitkeep') {
+                continue;
+            }
+            if ($file->isDir()) {
+                @rmdir($file->getPathname());
+            } else {
+                @unlink($file->getPathname());
+            }
+        }
+
+        $files = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($source, FilesystemIterator::SKIP_DOTS));
+        foreach ($files as $filePath) {
+            if (!$filePath->isFile()) {
+                continue;
+            }
+            $ext = strtolower(pathinfo($filePath->getFilename(), PATHINFO_EXTENSION));
+            if (!in_array($ext, $allowed, true)) {
+                continue;
+            }
+            $relative = ltrim(str_replace($restoreRoot, '', str_replace('\\', '/', $filePath->getPathname())), '/');
+            $destination = $uploadsRoot . $relative;
+            $destinationDir = dirname($destination);
+            if (!is_dir($destinationDir)) {
+                mkdir($destinationDir, 0755, true);
+            }
+            copy($filePath->getPathname(), $destination);
+        }
+    }
+}

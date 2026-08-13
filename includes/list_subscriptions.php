@@ -91,6 +91,57 @@ function getSubscriptionProgress($cycle, $frequency, $next_payment, $start_date 
     return (int) min(100, floor(($elapsedDays / $periodDays) * 100));
 }
 
+function getSubscriptionRemainingDays($next_payment)
+{
+    if (empty($next_payment)) {
+        return 0;
+    }
+    try {
+        $next = new DateTimeImmutable($next_payment);
+        $today = new DateTimeImmutable('today');
+        return (int) $today->diff($next)->format('%r%a');
+    } catch (Exception $e) {
+        return 0;
+    }
+}
+
+function renderSubscriptionProgress($subscription, $style, $i18n, $extraClass = '')
+{
+    if (!empty($subscription['inactive'])) {
+        return;
+    }
+    $progress = isset($subscription['progress']) ? (int) $subscription['progress'] : 0;
+    if ($progress > 100) {
+        $progress = 100;
+    }
+    if ($style === 'ring') {
+        $days = isset($subscription['days_left'])
+        ? (int) $subscription['days_left']
+        : getSubscriptionRemainingDays($subscription['next_payment'] ?? '');
+    $days = max(0, $days);
+        $radius = 15.5;
+        $circumference = 2 * M_PI * $radius;
+        $offset = $circumference * (1 - ($progress / 100));
+        ?>
+        <span class="progress-ring" title="<?= htmlspecialchars($days . ' ' . translate('days', $i18n) . ' · ' . $progress . '%') ?>">
+            <svg viewBox="0 0 36 36" aria-hidden="true">
+                <circle class="progress-ring-bg" cx="18" cy="18" r="15.5"></circle>
+                <circle class="progress-ring-fg" cx="18" cy="18" r="15.5"
+                    stroke-dasharray="<?= number_format($circumference, 2, '.', '') ?>"
+                    stroke-dashoffset="<?= number_format($offset, 2, '.', '') ?>"></circle>
+            </svg>
+            <span class="progress-ring-label"><?= (int) $days ?><small><?= translate('days_short', $i18n) ?></small></span>
+        </span>
+        <?php
+        return;
+    }
+    ?>
+    <div class="subscription-progress-container<?= $extraClass !== '' ? ' ' . htmlspecialchars($extraClass) : '' ?>">
+        <span class="subscription-progress" style="width: <?= $progress ?>%;"></span>
+    </div>
+    <?php
+}
+
 function getPricePerMonth($cycle, $frequency, $price)
 {
     switch ($cycle) {
@@ -191,6 +242,7 @@ function formatDate($date, $lang = 'en')
 
 function printSubscriptions($subscriptions, $sort, $categories, $members, $i18n, $colorTheme, $imagePath, $disabledToBottom, $mobileNavigation, $showSubscriptionProgress, $currencies, $lang)
 {
+    global $settings;
     if ($sort === "price") {
         $priceDirection = function_exists('wallos_sort_direction') ? wallos_sort_direction('price') : 'DESC';
         usort($subscriptions, function ($a, $b) use ($priceDirection) {
@@ -350,6 +402,11 @@ function printSubscriptions($subscriptions, $sort, $categories, $members, $i18n,
 
                     </span>
                     <span class="payment_method">
+                        <?php
+                        if ($showSubscriptionProgress === 'true' && ($settings['subscription_progress_style'] ?? 'bar') === 'ring' && !$subscription['inactive']) {
+                            renderSubscriptionProgress($subscription, 'ring', $i18n);
+                        }
+                        ?>
                         <img src="<?= $subscription['payment_method_icon'] ?>"
                             title="<?= translate('payment_method', $i18n) ?>: <?= $subscription['payment_method_name'] ?>" />
                     </span>
@@ -428,13 +485,8 @@ function printSubscriptions($subscriptions, $sort, $categories, $members, $i18n,
                 </div>
             </div>
             <?php
-            if ($showSubscriptionProgress === 'true' && !$subscription['inactive']) {
-                $progress = $subscription['progress'] > 100 ? 100 : $subscription['progress'];
-                ?>
-                <div class="subscription-progress-container">
-                    <span class="subscription-progress" style="width: <?= $progress ?>%;"></span>
-                </div>
-                <?php
+            if ($showSubscriptionProgress === 'true' && !$subscription['inactive'] && ($settings['subscription_progress_style'] ?? 'bar') !== 'ring') {
+                renderSubscriptionProgress($subscription, 'bar', $i18n);
             }
             ?>
         </div>
