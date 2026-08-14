@@ -195,7 +195,15 @@ function restoreDB() {
     },
     body: formData,
   })
-    .then(response => response.json())
+    .then(async response => {
+      const text = await response.text();
+      try {
+        return JSON.parse(text);
+      } catch (e) {
+        const plain = text.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+        throw new Error(plain.slice(0, 200) || translate('unknown_error'));
+      }
+    })
     .then(data => {
       if (data.success) {
         showSuccessMessage(data.message);
@@ -214,7 +222,7 @@ function restoreDB() {
     })
     .catch(error => {
       console.error(error);
-      showErrorMessage(translate('unknown_error'));
+      showErrorMessage(error.message || translate('unknown_error'));
     })
     .finally(() => {
       button.disabled = false;

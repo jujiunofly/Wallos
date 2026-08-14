@@ -157,7 +157,15 @@ function restoreDB() {
     method: 'POST',
     body: formData
   })
-    .then(response => response.json())
+    .then(async response => {
+      const text = await response.text();
+      try {
+        return JSON.parse(text);
+      } catch (e) {
+        const plain = text.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+        throw new Error(plain.slice(0, 200) || 'Unknown error');
+      }
+    })
     .then(data => {
       if (data.success) {
         closeRestoreModal();
@@ -169,7 +177,7 @@ function restoreDB() {
         showErrorMessage(data.message);
       }
     })
-    .catch(error => showErrorMessage('Error:', error));
+    .catch(error => showErrorMessage(error.message || 'Unknown error'));
 }
 
 function checkThemeNeedsUpdate() {

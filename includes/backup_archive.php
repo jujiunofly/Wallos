@@ -86,6 +86,106 @@ function wallos_create_backup_archive()
     ];
 }
 
+function wallos_json_exit(array $payload): void
+{
+    while (ob_get_level() > 0) {
+        ob_end_clean();
+    }
+    if (!headers_sent()) {
+        header('Content-Type: application/json; charset=UTF-8');
+    }
+    echo json_encode($payload);
+    exit;
+}
+
+function wallos_project_tmp_dir(): string
+{
+    return dirname(__DIR__) . DIRECTORY_SEPARATOR . '.tmp';
+}
+
+function wallos_ensure_dir(string $dir): bool
+{
+    return is_dir($dir) || (mkdir($dir, 0777, true) && is_dir($dir));
+}
+
+function wallos_empty_dir(string $dir): void
+{
+    if (!is_dir($dir)) {
+        return;
+    }
+
+    $files = new RecursiveIteratorIterator(
+        new RecursiveDirectoryIterator($dir, FilesystemIterator::SKIP_DOTS),
+        RecursiveIteratorIterator::CHILD_FIRST
+    );
+
+    foreach ($files as $fileinfo) {
+        $path = $fileinfo->getPathname();
+        if ($fileinfo->isDir()) {
+            @rmdir($path);
+        } else {
+            @unlink($path);
+        }
+    }
+}
+
+function wallos_close_sqlite(?SQLite3 &$db): void
+{
+    if ($db instanceof SQLite3) {
+        $db->close();
+    }
+    $db = null;
+    gc_collect_cycles();
+}
+
+function wallos_replace_sqlite_file(string $source, string $dest): array
+{
+    foreach ([$dest . '-wal', $dest . '-shm', $dest . '-journal'] as $sidecar) {
+        if (file_exists($sidecar)) {
+            @unlink($sidecar);
+        }
+    }
+
+    if (file_exists($dest)) {
+        $unlinked = false;
+        for ($i = 0; $i < 10; $i++) {
+            if (@unlink($dest)) {
+                $unlinked = true;
+                break;
+            }
+            usleep(100000);
+        }
+        if (!$unlinked) {
+            return ['ok' => false, 'message' => 'Failed to remove existing database'];
+        }
+    }
+
+    if (@rename($source, $dest)) {
+        return ['ok' => true];
+    }
+
+    if (@copy($source, $dest)) {
+        @unlink($source);
+        return ['ok' => true];
+    }
+
+    return ['ok' => false, 'message' => 'Failed to replace database'];
+}
+
+function wallos_zip_has_unsafe_entry(ZipArchive $zip): bool
+{
+    for ($i = 0; $i < $zip->numFiles; $i++) {
+        $entry = str_replace('\\', '/', (string) $zip->getNameIndex($i));
+        if ($entry === '') {
+            continue;
+        }
+        if ($entry[0] === '/' || in_array('..', explode('/', $entry), true)) {
+            return true;
+        }
+    }
+    return false;
+}
+
 function wallos_restore_uploaded_media($restoreRoot, $uploadsRoot)
 {
     $folders = ['logos', 'branding', 'backgrounds'];
