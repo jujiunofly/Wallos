@@ -84,6 +84,9 @@ foreach ($slots as $slot) {
     $bgValues[$slot] = 'image:' . $name;
 }
 
+$bgValues['bg_mobile_light'] = $bgValues['bg_desktop_light'];
+$bgValues['bg_mobile_dark'] = $bgValues['bg_desktop_dark'];
+
 $appLogo = wallos_sanitize_app_logo($existingBg['app_logo'] ?? '');
 if (!empty($_POST['app_logo_reset'])) {
     $appLogo = '';

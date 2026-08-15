@@ -2,6 +2,16 @@
   --logo-flex-basis: 17%;
 }
 
+html {
+  overflow-y: scroll;
+  scrollbar-gutter: stable;
+}
+
+html:has(body.details-open) {
+  overflow-y: scroll;
+  scrollbar-gutter: stable;
+}
+
 body {
   font-family: Barlow, 'Helvetica Neue', Helvetica, sans-serif;
   margin: 0;
@@ -3922,6 +3932,7 @@ input[type="radio"]:checked+label::after {
 
 body.details-open {
   overflow-y: hidden;
+  scrollbar-gutter: stable;
 }
 
 .details-backdrop {

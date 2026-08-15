@@ -1588,8 +1588,6 @@ if ($budgetPeriodAnchorDate === '1970-01-01' || !preg_match('/^\d{4}-\d{2}-\d{2}
                     $bgSlots = [
                         'bg_desktop_light' => translate('bg_desktop_light', $i18n),
                         'bg_desktop_dark' => translate('bg_desktop_dark', $i18n),
-                        'bg_mobile_light' => translate('bg_mobile_light', $i18n),
-                        'bg_mobile_dark' => translate('bg_mobile_dark', $i18n),
                     ];
                     foreach ($bgSlots as $slot => $label) {
                         $parsed = wallos_parse_background_value($appearance[$slot] ?? '');

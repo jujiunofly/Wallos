@@ -80,18 +80,10 @@ require_once __DIR__ . '/appearance.php';
 $appearance = wallos_appearance_from_settings($settings);
 $bgDesktopLight = wallos_background_css($appearance['bg_desktop_light'], false);
 $bgDesktopDark = wallos_background_css($appearance['bg_desktop_dark'], true);
-$bgMobileLight = wallos_background_css($appearance['bg_mobile_light'], false);
-$bgMobileDark = wallos_background_css($appearance['bg_mobile_dark'], true);
-if ($bgMobileLight === '') {
-    $bgMobileLight = $bgDesktopLight;
-}
-if ($bgMobileDark === '') {
-    $bgMobileDark = $bgDesktopDark;
-}
+$bgMobileLight = $bgDesktopLight;
+$bgMobileDark = $bgDesktopDark;
 $isDarkTheme = $theme === 'dark';
-$activePageBg = $isDarkTheme
-    ? ($bgDesktopDark !== '' ? $bgDesktopDark : $bgMobileDark)
-    : ($bgDesktopLight !== '' ? $bgDesktopLight : $bgMobileLight);
+$activePageBg = $isDarkTheme ? $bgDesktopDark : $bgDesktopLight;
 $hasPageBg = $activePageBg !== '';
 $showAppSidebar = !isset($_COOKIE['wallos_sidebar']) || $_COOKIE['wallos_sidebar'] !== '0';
 $appearanceClasses = trim(
@@ -106,6 +98,7 @@ $darkThemeMode = isset($settings['dark_theme']) ? (int) $settings['dark_theme'] 
 <html dir="<?= $languages[$lang]['dir'] ?>">
 <head>
   <meta charset="UTF-8">
+  <meta name="view-transition" content="same-origin">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title><?= $appearance['header_title'] !== '' ? htmlspecialchars($appearance['header_title']) : 'Wallos - Subscription Tracker' ?></title>
   <meta name="apple-mobile-web-app-title" content="<?= $appearance['header_title'] !== '' ? htmlspecialchars($appearance['header_title']) : 'Wallos' ?>">

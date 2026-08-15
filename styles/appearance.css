@@ -1186,8 +1186,29 @@ body.glass-enabled label.button.secondary-button {
   margin-top: 16px;
 }
 
+@view-transition {
+  navigation: auto;
+}
+
 .app-sidebar {
   display: none;
+}
+
+@media (min-width: 768px) {
+  body.has-app-sidebar .app-sidebar {
+    view-transition-name: app-sidebar;
+  }
+
+  ::view-transition-old(app-sidebar),
+  ::view-transition-new(app-sidebar) {
+    animation: none;
+    mix-blend-mode: normal;
+    height: 100%;
+  }
+
+  ::view-transition-group(app-sidebar) {
+    animation: none;
+  }
 }
 
 .header-sidebar-toggle {

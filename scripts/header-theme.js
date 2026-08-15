@@ -20,16 +20,7 @@ function slotBackground(key) {
 
 function currentAppearanceBackground() {
   const dark = document.body.classList.contains('dark');
-  const mobile = window.matchMedia('(max-width: 768px)').matches;
-  const theme = dark ? 'dark' : 'light';
-  const preferred = slotBackground((mobile ? 'bg_mobile_' : 'bg_desktop_') + theme);
-  if (preferred.css) {
-    return preferred.css;
-  }
-  if (mobile) {
-    return slotBackground('bg_desktop_' + theme).css || '';
-  }
-  return '';
+  return slotBackground('bg_desktop_' + (dark ? 'dark' : 'light')).css || '';
 }
 
 function applyPageBackground() {
@@ -195,9 +186,24 @@ function setSidebarVisible(on) {
 
 document.addEventListener('DOMContentLoaded', function () {
   applyPageBackground();
-  if (window.matchMedia) {
-    window.matchMedia('(max-width: 768px)').addEventListener('change', applyPageBackground);
-  }
+  document.querySelectorAll('.app-sidebar-link').forEach((link) => {
+    const href = link.getAttribute('href');
+    if (href && href !== '#') {
+      link.addEventListener('mouseenter', () => {
+        if (document.querySelector('link[rel="prefetch"][href="' + href + '"]')) {
+          return;
+        }
+        const prefetch = document.createElement('link');
+        prefetch.rel = 'prefetch';
+        prefetch.href = href;
+        document.head.appendChild(prefetch);
+      });
+      link.addEventListener('click', () => {
+        document.querySelectorAll('.app-sidebar-link').forEach((item) => item.classList.remove('active'));
+        link.classList.add('active');
+      });
+    }
+  });
   const sidebarToggle = document.getElementById('headerSidebarToggle');
   if (sidebarToggle) {
     sidebarToggle.addEventListener('click', () => {
