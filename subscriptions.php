@@ -332,29 +332,6 @@ $subscriptionsView = (isset($_COOKIE['subscriptionsView']) && $_COOKIE['subscrip
         <i class="fa-solid fa-magnifying-glass"></i>
       </div>
       <input type="hidden" id="id" name="id">
-      <div class="logo-search-backdrop" id="logo-search-backdrop" onClick="closeLogoSearch()"></div>
-      <div id="logo-search-results" class="logo-search"<?= !empty($googleSearchEnabled) ? ' data-google-search="1"' : '' ?>>
-        <button type="button" class="close-logo-search" onClick="closeLogoSearch()" title="<?= translate('cancel', $i18n) ?>">
-          <i class="fa-solid fa-xmark"></i>
-        </button>
-        <header>
-          <h3 id="logo-search-title" data-title="<?= translate('web_search', $i18n) ?>">
-            <?= translate('web_search', $i18n) ?>
-          </h3>
-        </header>
-        <div class="logo-search-controls">
-          <div class="logo-search-query">
-            <input type="text" id="logo-search-query" autocomplete="off" inputmode="search"
-              placeholder="<?= translate('search_logo', $i18n) ?>"
-              aria-label="<?= translate('search_logo', $i18n) ?>">
-            <button type="button" id="logo-search-submit" title="<?= translate('search', $i18n) ?>">
-              <i class="fa-solid fa-magnifying-glass"></i>
-            </button>
-          </div>
-          <div id="logo-search-nav" class="logo-search-nav"></div>
-        </div>
-        <div id="logo-search-images"></div>
-      </div>
     </div>
 
     <div class="form-group-inline">
@@ -562,6 +539,30 @@ $subscriptionsView = (isset($_COOKIE['subscriptionsView']) && $_COOKIE['subscrip
     </div>
   </form>
 </section>
+
+<div class="logo-search-backdrop" id="logo-search-backdrop" onClick="closeLogoSearch()"></div>
+<div id="logo-search-results" class="logo-search"<?= !empty($googleSearchEnabled) ? ' data-google-search="1"' : '' ?>>
+  <button type="button" class="close-logo-search" onClick="closeLogoSearch()" title="<?= translate('cancel', $i18n) ?>">
+    <i class="fa-solid fa-xmark"></i>
+  </button>
+  <header>
+    <h3 id="logo-search-title" data-title="<?= translate('web_search', $i18n) ?>">
+      <?= translate('web_search', $i18n) ?>
+    </h3>
+  </header>
+  <div class="logo-search-controls">
+    <div class="logo-search-query">
+      <input type="text" id="logo-search-query" autocomplete="off" inputmode="search"
+        placeholder="<?= translate('search_logo', $i18n) ?>"
+        aria-label="<?= translate('search_logo', $i18n) ?>">
+      <button type="button" id="logo-search-submit" title="<?= translate('search', $i18n) ?>">
+        <i class="fa-solid fa-magnifying-glass"></i>
+      </button>
+    </div>
+    <div id="logo-search-nav" class="logo-search-nav"></div>
+  </div>
+  <div id="logo-search-images"></div>
+</div>
 
 <?php require_once 'includes/subscription_details_popup.php'; ?>
 <script src="scripts/subscriptions.js?<?= $version ?>"></script>

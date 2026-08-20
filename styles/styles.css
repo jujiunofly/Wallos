@@ -1715,7 +1715,7 @@ textarea.thin {
   height: 100%;
   background-color: rgba(0, 0, 0, 0.4);
   backdrop-filter: blur(3px);
-  z-index: 21;
+  z-index: 110;
   opacity: 0;
   visibility: hidden;
   transition: opacity 0.25s ease, visibility 0s linear 0.25s;
@@ -1745,7 +1745,7 @@ textarea.thin {
   box-shadow: var(--shadow-pop);
   background-color: var(--box-background-color);
   box-sizing: border-box;
-  z-index: 22;
+  z-index: 111;
 }
 
 .icon-search {

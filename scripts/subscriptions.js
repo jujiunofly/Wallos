@@ -189,6 +189,7 @@ function addSubscription() {
 }
 
 function closeAddSubscription() {
+  closeLogoSearch();
   const modal = document.getElementById('subscription-form');
   modal.classList.remove("is-open");
   const body = document.querySelector('body');
