@@ -309,6 +309,7 @@ $subscriptionsView = (isset($_COOKIE['subscriptionsView']) && $_COOKIE['subscrip
     ?>
   </div>
 </section>
+<div class="details-backdrop" id="subscription-form-backdrop" onClick="closeAddSubscription()"></div>
 <section class="subscription-form" id="subscription-form">
   <header>
     <h3 id="form-title"><?= translate('add_subscription', $i18n) ?></h3>

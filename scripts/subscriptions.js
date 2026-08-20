@@ -133,8 +133,24 @@ function fillEditFormFields(subscription) {
   deleteButton.style = 'display: block';
   deleteButton.setAttribute("onClick", `deleteSubscription(event, ${subscription.id})`);
 
+  setSubscriptionFormOpen(true);
+}
+
+function setSubscriptionFormOpen(open) {
   const modal = document.getElementById('subscription-form');
-  modal.classList.add("is-open");
+  const backdrop = document.getElementById('subscription-form-backdrop');
+  if (!modal) {
+    return;
+  }
+  if (open && typeof closeSubscriptionDetails === 'function') {
+    closeSubscriptionDetails();
+  }
+  modal.classList.toggle('is-open', !!open);
+  if (backdrop) {
+    backdrop.classList.toggle('is-open', !!open);
+  }
+  document.body.classList.toggle('details-open', !!open);
+  document.body.classList.toggle('no-scroll', !!open);
 }
 
 function closeActionsMenu() {
@@ -151,8 +167,6 @@ function openEditSubscription(event, id) {
   event.stopPropagation();
   closeActionsMenu();
   scrollTopBeforeOpening = window.scrollY;
-  const body = document.querySelector('body');
-  body.classList.add('no-scroll');
   const url = `endpoints/subscription/get.php?id=${id}`;
   fetch(url)
     .then((response) => {
@@ -178,22 +192,14 @@ function openEditSubscription(event, id) {
 
 function addSubscription() {
   resetForm();
-  const modal = document.getElementById('subscription-form');
-  
   const startDate = document.querySelector("#start_date");
   startDate.value = new Date().toISOString().split('T')[0];
-
-  modal.classList.add("is-open");
-  const body = document.querySelector('body');
-  body.classList.add('no-scroll');
+  setSubscriptionFormOpen(true);
 }
 
 function closeAddSubscription() {
   closeLogoSearch();
-  const modal = document.getElementById('subscription-form');
-  modal.classList.remove("is-open");
-  const body = document.querySelector('body');
-  body.classList.remove('no-scroll');
+  setSubscriptionFormOpen(false);
   if (shouldScroll) {
     window.scrollTo(0, scrollTopBeforeOpening);
   }
@@ -344,10 +350,15 @@ function searchLogo() {
   const logoResults = document.querySelector("#logo-search-images");
   const logoNav = document.querySelector("#logo-search-nav");
   const logoSearchBackdrop = document.querySelector("#logo-search-backdrop");
-  logoSearchPopup.classList.add("is-open");
   if (logoSearchBackdrop) {
+    document.body.appendChild(logoSearchBackdrop);
     logoSearchBackdrop.classList.add("is-open");
   }
+  if (logoSearchPopup) {
+    document.body.appendChild(logoSearchPopup);
+    logoSearchPopup.classList.add("is-open");
+  }
+  document.body.classList.add("logo-search-open");
   const subscriptionForm = document.querySelector("#subscription-form");
   if (subscriptionForm) {
     subscriptionForm.classList.add("scroll-locked");
@@ -531,11 +542,14 @@ function selectWebLogo(url, previewUrl = url) {
 
 function closeLogoSearch() {
   const logoSearchPopup = document.querySelector("#logo-search-results");
-  logoSearchPopup.classList.remove("is-open");
+  if (logoSearchPopup) {
+    logoSearchPopup.classList.remove("is-open");
+  }
   const logoSearchBackdrop = document.querySelector("#logo-search-backdrop");
   if (logoSearchBackdrop) {
     logoSearchBackdrop.classList.remove("is-open");
   }
+  document.body.classList.remove("logo-search-open");
   const subscriptionForm = document.querySelector("#subscription-form");
   if (subscriptionForm) {
     subscriptionForm.classList.remove("scroll-locked");
